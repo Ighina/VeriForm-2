@@ -1,0 +1,198 @@
+\section{Data statistics}
+\label{app:data_stats}
+Table~\ref{tab:data_stats} reports the size of ProcessBench \cite{processbench} and of the splits used for the learned router. ProcessBench only annotates the first erroneous step of a solution, hence the steps that follow it are discarded and the remaining 16,548 steps are labelled as correct (86.6\%) or incorrect. The BERT router is trained only on the steps for which the Python verifier returns a Boolean verdict (6,444 steps from 1,778 distinct problems), since its routing label is derived from the agreement between that verdict and the annotation (Section~\ref{sec:setup}). The resulting label distribution is heavily skewed towards Python: 4,372 vs.\ 432 steps in training, 249 vs.\ 28 in validation and 1,207 vs.\ 156 in test. Table~\ref{tab:verifier_outcomes} shows the distribution of the outcomes of the two verifiers on all annotated steps: the Python verifier fails to produce an executable checker for most steps of the three harder datasets, while the Lean pipeline more often produces a statement that the prover cannot prove.
+
+\input{tables/data_statistics}
+\input{tables/verifier_outcomes}
+
+\section{Verifier implementation details}
+\label{app:verifiers}
+\paragraph{Python verifier.} Each step is verified by Qwen3-Coder-Next \cite{qwen_qwen3_coder_next_tech_report} with greedy decoding (at most 512 new tokens, half precision), prompted with the problem, the preceding steps and the target step using the prompt below. The generated program is parsed and rejected if it uses imports, attribute access, function or class definitions, exception handling or other constructs that could escape the sandbox; otherwise it is executed in a fresh isolated interpreter with a minimal set of built-ins, a 10-second CPU limit and a 256\,MB memory limit. A program that does not assign a Boolean to \texttt{result} counts as a verification failure.
+\begin{small}
+\begin{verbatim}
+You are generating a Python verifier for exactly
+ONE reasoning step.
+
+Your task is to determine whether the TARGET STEP
+makes a new, locally verifiable mathematical
+inference from the supplied premises.
+
+Premises:
+- The original problem statement may be used to
+  interpret notation and facts.
+- The context contains reasoning steps that
+  occurred before the target.
+- Statements introduced only inside the target
+  must not be treated as premises.
+
+Scope restriction:
+- Verify only the explicit mathematical claim or
+  transformation made by the target step.
+- Do not solve the original problem unless the
+  target step itself explicitly performs that
+  solution.
+- Do not compute later quantities, derive the
+  final answer, or use constraints that are
+  unnecessary for checking the target.
+- Do not verify the whole reasoning chain.
+- A valid solution to the complete problem does
+  not by itself prove that the target step is
+  correct.
+
+Generate a checker for every target step. A
+target that copies a given, introduces notation,
+states an assumption, or describes what is to be
+found must still be checked for faithful
+consistency with the problem and earlier context.
+Do not abstain and do not emit an exception for
+such a step.
+
+- Generate executable Python that checks only the
+  target statement or inference.
+- Derive `result` from executable operations.
+- Do not hard-code `result = True` or
+  `result = False`.
+- Do not use the final solution unless the target
+  explicitly derives it.
+- Assign exactly one Boolean value to `result`.
+
+Output requirements:
+- Output only valid Python source.
+- Do not use Markdown fences.
+- Do not include comments or explanations.
+- Do not define unused functions.
+- Keep the program under 20 lines.
+- Do not import modules, access files, call
+  input(), or use network/system APIs.
+
+Representation: linear
+
+Problem:
+{problem}
+
+Target step:
+{target}
+
+Earlier context:
+{numbered preceding steps}
+
+Write the step-local Python verifier now.
+\end{verbatim}
+\end{small}
+
+\paragraph{Lean verifier.} The autoformaliser $\mathcal{A}$ is Goedel-Formalizer-V2-8B and the prover $\mathcal{P}$ is Goedel-Prover-V2-8B \cite{goedel2025}, both served with vLLM (temperature 0.2, top-$p$ 0.9, one sample of at most 4,096 tokens; top-$k$ 20 for the autoformaliser). The autoformaliser receives all preceding steps of the solution as context and is instructed to formalise only the claim made by the target step as a Lean~4 theorem (header \texttt{import Mathlib}), without solving the problem or strengthening the conclusion; the theorem is renamed \texttt{step\_$i$}. The prover is asked to produce a proof plan followed by a complete proof of the theorem; a candidate is retained only if it preserves the theorem statement exactly, and the step is accepted if the candidate compiles against Mathlib (\texttt{maxHeartbeats 0}). A statement that does not type-check counts as an autoformalisation failure and a statement whose proof does not compile as a prover failure; the pipeline therefore never returns an explicit \texttt{False} and both failures are treated as rejections of the step. A lightweight heuristic check of the alignment between the natural-language step and the formal statement (e.g.\ mismatching final numerical values, or existential weakening of a claim) is recorded for analysis but not used in the verdicts.
+
+\section{LLM router prompts}
+\label{app:prompts}
+The LLM router receives the system prompt below and a user message containing the problem, the preceding steps, the target step, the complete JSON record of the Python verifier for that step (prompt, generated code, execution outcome and error), the Lean statement and proof attempt, the Lean pipeline outcomes and the raw prompts and outputs of the autoformaliser and the prover. The draft answer is then passed back to the model together with the original comparison and the review instructions below, and only the reviewed answer is kept. Qwen3.5-9B is run locally with greedy decoding, thinking mode disabled and at most 512 new tokens; GPT-5.6 Luna is queried through the OpenAI API with at most 512 completion tokens and low reasoning effort. Answers that are not a valid JSON object with the required fields after the review call are marked as unresolved. Table~\ref{tab:router_choices} shows the distribution of the choices.
+
+\input{tables/router_choices}
+
+\begin{small}
+\begin{verbatim}
+You are an LLM agent jointly comparing the
+complete Python and Lean verification artifact
+bundles for exactly one mathematical reasoning
+step.
+
+You are a meticulous step-local mathematical
+proof reviewer. Compare two candidate verifiers
+for exactly one reasoning step. Do not reward a
+candidate for proving the full problem, using
+later facts, or proving a stronger claim. A proof
+may be syntactically valid yet semantically
+misaligned.
+
+Use only the problem and earlier context. Judge
+exactly the target step, not the whole solution
+and not any later step. Inspect the generated
+source, autoformalisation, proof, model
+responses, execution/compilation outcomes,
+alignment results, errors, and runtime logs.
+Compilation or execution success alone is not
+enough: judge semantic fidelity, soundness,
+non-vacuity, use of only prior context, and
+suitability for the exact target. Compare the
+bundles jointly; do not produce separate verifier
+verdicts.
+
+Choose python when only the Python bundle is a
+sound and faithful verification, or when both
+work but Python is materially better suited.
+Choose lean analogously. Choose tie only when
+both bundles are sound, faithful, and equally
+suitable. Always choose inconclusive when the
+target step makes no new checkable inference,
+whether or not either candidate abstains. Any
+non-abstaining candidate in that case is
+semantically misaligned. Also choose inconclusive
+when both candidates appropriately abstain or
+when the comparison cannot be decided. Choose
+neither only when the target step is verifiable
+and both candidates are incorrect. Choose tie
+when both are equally correct.
+
+Return only one JSON object with exactly this
+shape:
+{"choice":"python|lean|tie|neither|inconclusive",
+ "reason":"brief step-local joint comparison"}
+\end{verbatim}
+\end{small}
+Review instructions (second call):
+\begin{small}
+\begin{verbatim}
+Audit the draft classification below and return
+the corrected final JSON object. Apply this
+decision procedure in order:
+
+1. First decide whether the TARGET STEP makes a
+   new checkable mathematical inference from the
+   problem and earlier context.
+2. If it does not, choice MUST be "inconclusive",
+   regardless of whether Python or Lean abstains,
+   succeeds, compiles, executes, or proves a
+   stronger claim. A non-abstaining verifier is
+   semantically misaligned in this case.
+3. Only if the target is verifiable may you
+   compare the artifact bundles: choose "neither"
+   if both are incorrect, "tie" if both are
+   equally correct, or "python"/"lean" for the
+   sole or materially better correct verifier.
+4. Use "inconclusive" if the evidence cannot
+   support a reliable decision.
+
+Do not repeat a draft choice that conflicts with
+its own reason. Return exactly
+{"choice":"python|lean|tie|neither|inconclusive",
+ "reason":"brief justification"}
+and no other fields or prose.
+
+DRAFT RESPONSE:
+{draft}
+
+ORIGINAL JOINT COMPARISON:
+{original user message}
+\end{verbatim}
+\end{small}
+
+\section{BERT router details}
+\label{app:bert_details}
+The learned router fine-tunes \texttt{bert-base-uncased} (110M parameters) \cite{devlin-etal-2019-bert} with a two-way classification head on the step text alone; the problem statement, the preceding steps and any verifier output are not given to the model. Training uses the Hugging Face \texttt{Trainer} with cross-entropy loss, AdamW (learning rate $2\cdot10^{-5}$, weight decay 0.01, linear decay without warm-up), batch size 16, 3 epochs, inputs truncated to 512 tokens and seed 42; the checkpoint with the best validation macro-F1 (epoch 2) is kept. Training takes under two minutes on a single H200 GPU.
+
+Because 90\% of the training labels are Python, the router is strongly biased towards Python: with the default threshold it routes only 12 of the 1,363 test steps to Lean (routing accuracy 88.4\%, routing balanced accuracy 51.3\%, Lean recall 3.2\%), which makes it almost indistinguishable from always choosing Python (they differ on 8 of the 1,282 matched test steps in Table~\ref{tab:test_split_results}). Selecting the threshold that maximises routing balanced accuracy on the validation split lowers it to $P(\mathrm{Lean})\geq0.034$ and routes 845 test steps to Lean (routing accuracy 44.2\%, routing balanced accuracy 58.4\%, Lean recall 76.9\%), but this does not improve downstream verification (last row of Table~\ref{tab:test_split_results}): the routing label is a noisy proxy for the verification outcome, since a Lean label only records that the Python verdict disagreed with the annotation and not that Lean would succeed. Re-running the training recipe with the same seed on a different GPU produces routers with comparable validation scores whose test probabilities correlate only moderately with the original ones (see Appendix~\ref{app:ig}), another symptom of the weak signal available to the router.
+
+\section{Evaluation protocol}
+\label{app:evaluation}
+Each annotated step is predicted correct when the verifier selected by the router returns \texttt{True} and incorrect otherwise. For the LLM router, \textit{python} and \textit{lean} follow the corresponding verifier, \textit{neither} predicts an incorrect step, \textit{inconclusive} predicts a correct step and \textit{tie} is resolved only when the two verifiers agree. Of the 1,363 steps in the test split of the learned router, 81 are excluded because at least one LLM router produced no resolved verdict (request failure or discordant tie); the remaining 1,282 steps (313 GSM8K, 386 MATH, 326 OlympiadBench, 257 OmniMATH) are used for every method in Table~\ref{tab:test_split_results} and in Table~\ref{tab:test_split_accuracy}, which reports plain accuracy on the same steps. The \emph{Oracle routing} row selects, for each step, a verifier whose verdict matches the annotation whenever one exists and measures the headroom available to any router. On the full 1,363-step test split the BERT router obtains a balanced accuracy of 59.80, 76.00, 76.04 and 65.43 on the four datasets (average 69.32), the values reported in Table~\ref{tab:benchmark_results}, whose LLM rows are instead computed on all resolved ProcessBench steps (16,495 for Qwen3.5-9B and 15,636 for GPT-5.6 Luna). Exact McNemar tests against \emph{Python only} on the matched steps give $p=0.14$ for Qwen3.5-9B, $p=1$ for the BERT router and $p<10^{-9}$ for GPT-5.6 Luna and for both single-verifier baselines.
+
+\input{tables/router_test_split_accuracy}
+
+\section{Integrated Gradients details}
+\label{app:ig}
+Attributions are computed with Layer Integrated Gradients \cite{sundararajan2017axiomatic} on the embedding layer of the router, against a baseline of the same length in which every token except \texttt{[CLS]} and \texttt{[SEP]} is replaced by \texttt{[PAD]}. The attributed quantity is the Lean logit; attributions are summed over the embedding dimension to obtain one signed score per WordPiece, and WordPiece scores are summed into whitespace-delimited words using character offsets. The path integral uses 100 Gauss--Legendre steps, doubled up to 1,600 whenever the completeness residual exceeds 0.01 logits; 11 of the 12 analysed steps meet the tolerance and the remaining one (\texttt{olympiadbench-165}, step 2, residual $-0.019$) is flagged in the released data. For every step, up to eight words with the largest positive attribution are tested individually by deleting the occurrence and by replacing it with \texttt{[MASK]}, together with three words of negligible attribution as comparison, and the five most attributed words are also removed jointly. Interventions change the text and its tokenisation, so they measure local sensitivity of the router and not a semantic rule; the examples of Figure~\ref{fig:lean_triggers} were chosen after inspecting the results. The attribution and intervention records of all 12 steps are released with the code (\texttt{analyze\_lean\_triggers.py}).
+
+We also attempted a dataset-wide analysis, attributing the routing margin $\mathrm{logit}(\mathrm{Lean})-\mathrm{logit}(\mathrm{Python})$ of every one of the 1,363 test steps and aggregating by word and lexical category. Since this requires the model, and the weights of the original run were not available, we re-ran the training recipe of Appendix~\ref{app:bert_details} twice (same data, splits, seed and hyper-parameters). The two retrained routers reach the same degenerate validation scores (accuracy 0.899, macro-F1 0.473, i.e.\ Python for every validation step) but route no test step to Lean at the default threshold (maximum $P(\mathrm{Lean})$ of 0.25 and 0.19), their test probabilities correlate only moderately with the original ones (Spearman $\rho=0.24$) and, although they agree on the ordering of the steps ($\rho=0.61$ between their margins), they do not agree on which words are responsible: over the 558 words occurring at least 10 times in at least 5 steps, the rank correlation of the mean word attribution between the two runs is 0.12 and the sign agrees for 45\% of them, and the mean attribution of mathematical notation changes sign between the runs. Dataset-wide word statistics of this router are therefore not reproducible and we do not report them; the retrained routers and both attribution runs are released for inspection.
+
+\section{Compute}
+\label{app:compute}
+All local models were run on NVIDIA H200 NVL GPUs. The Python verifier, the Lean pipeline and the Qwen3.5-9B router were each run once over the 25,697 steps of ProcessBench (two generation calls per step for the router); GPT-5.6 Luna was queried through the OpenAI API with the same two calls per step. Fine-tuning the BERT router takes about 90 seconds on one GPU and the Integrated Gradients analysis of the test split a few minutes. The code to reproduce all tables and figures from the saved verifier and router outputs, without any model inference, is released with the paper.

@@ -1,0 +1,160 @@
+{
+  "processbench": {
+    "gsm8k": {
+      "solutions": 400,
+      "steps": 2082,
+      "correct_solutions": 193,
+      "annotated_steps": 1568,
+      "annotated_correct": 1361
+    },
+    "math": {
+      "solutions": 1000,
+      "steps": 6505,
+      "correct_solutions": 406,
+      "annotated_steps": 4366,
+      "annotated_correct": 3772
+    },
+    "olympiadbench": {
+      "solutions": 1000,
+      "steps": 8819,
+      "correct_solutions": 339,
+      "annotated_steps": 5822,
+      "annotated_correct": 5161
+    },
+    "omnimath": {
+      "solutions": 1000,
+      "steps": 8291,
+      "correct_solutions": 241,
+      "annotated_steps": 4792,
+      "annotated_correct": 4033
+    }
+  },
+  "verifier_outcomes": {
+    "gsm8k": {
+      "python": {
+        "True": 1384,
+        "False": 81,
+        "Prover failure": 19,
+        "Autoformalisation failure": 84
+      },
+      "lean": {
+        "True": 1309,
+        "Prover failure": 220,
+        "Autoformalisation failure": 39
+      },
+      "steps_with_both": 1568
+    },
+    "math": {
+      "python": {
+        "False": 182,
+        "Autoformalisation failure": 2381,
+        "Prover failure": 138,
+        "True": 1665
+      },
+      "lean": {
+        "Prover failure": 1782,
+        "True": 2245,
+        "Autoformalisation failure": 339
+      },
+      "steps_with_both": 4366
+    },
+    "olympiadbench": {
+      "python": {
+        "Autoformalisation failure": 3796,
+        "False": 143,
+        "True": 1646,
+        "Prover failure": 237
+      },
+      "lean": {
+        "Prover failure": 2939,
+        "Autoformalisation failure": 716,
+        "True": 2167
+      },
+      "steps_with_both": 5822
+    },
+    "omnimath": {
+      "python": {
+        "Autoformalisation failure": 3347,
+        "True": 1186,
+        "Prover failure": 102,
+        "False": 157
+      },
+      "lean": {
+        "Prover failure": 2678,
+        "True": 1421,
+        "Autoformalisation failure": 693
+      },
+      "steps_with_both": 4792
+    }
+  },
+  "router_choices": {
+    "Qwen3.5-9B": {
+      "gsm8k": {
+        "inconclusive": 194,
+        "python": 985,
+        "neither": 167,
+        "unresolved": 4,
+        "lean": 144,
+        "tie": 74
+      },
+      "math": {
+        "python": 2079,
+        "inconclusive": 944,
+        "lean": 671,
+        "neither": 616,
+        "unresolved": 10,
+        "tie": 43
+      },
+      "olympiadbench": {
+        "inconclusive": 1593,
+        "python": 2762,
+        "neither": 695,
+        "lean": 729,
+        "tie": 25,
+        "unresolved": 18
+      },
+      "omnimath": {
+        "inconclusive": 1446,
+        "python": 2065,
+        "lean": 465,
+        "neither": 780,
+        "unresolved": 13,
+        "tie": 19
+      }
+    },
+    "GPT-5.6 Luna": {
+      "gsm8k": {
+        "inconclusive": 422,
+        "python": 354,
+        "tie": 484,
+        "neither": 168,
+        "lean": 133,
+        "unresolved": 7
+      },
+      "math": {
+        "python": 805,
+        "inconclusive": 778,
+        "lean": 685,
+        "neither": 1745,
+        "unresolved": 235,
+        "tie": 115
+      },
+      "olympiadbench": {
+        "neither": 2686,
+        "python": 925,
+        "lean": 719,
+        "inconclusive": 1118,
+        "unresolved": 291,
+        "tie": 83
+      },
+      "omnimath": {
+        "inconclusive": 1131,
+        "neither": 2131,
+        "lean": 452,
+        "python": 639,
+        "unresolved": 370,
+        "tie": 65
+      }
+    }
+  }
+}

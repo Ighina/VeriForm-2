@@ -1,0 +1,40 @@
+# The repository root doubles as a working home directory on the cluster.
+# Everything is ignored unless explicitly whitelisted below.
+*
+!.gitignore
+!README.md
+!todos-done.md
+!TODOs.md
+!LICENSE
+!pyproject.toml
+!requirements.txt
+
+# Source code and tests
+!veriform2/
+!veriform2/**
+!scripts/
+!scripts/**
+!tests/
+!tests/**
+
+# Compact experiment results, tables and figures
+!results/
+!results/**
+
+# The paper
+!Paper/
+!Paper/**
+
+# Never commit these even inside whitelisted folders
+__pycache__/
+*.pyc
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+Paper/main.pdf
+.DS_Store

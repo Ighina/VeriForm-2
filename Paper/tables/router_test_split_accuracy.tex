@@ -1,0 +1,19 @@
+\begin{table*}[ht]
+\centering
+\begin{tabular}{lccccc}
+\hline
+\textbf{Model / setting} & \textbf{GSM8K} & \textbf{MATH} & \textbf{OlympiadBench} & \textbf{OmniMATH} & \textbf{Average} \\
+\hline
+Python only & 87.86 & 92.23 & \textbf{90.49} & 83.27 & \textbf{88.46} \\
+Lean only & 79.55 & 67.10 & 45.71 & 46.30 & 59.67 \\
+Oracle routing (upper bound) & 92.33 & 96.11 & 94.17 & 91.83 & 93.61 \\
+\midrule
+$\mathcal{R}_{LLM}$, Qwen3.5-9B & 84.66 & 90.93 & \textbf{90.49} & \textbf{84.05} & 87.53 \\
+$\mathcal{R}_{LLM}$, GPT-5.6 Luna & \textbf{89.78} & 84.20 & 76.38 & 72.76 & 80.78 \\
+$\mathcal{R}_{BERT}$ & 88.18 & \textbf{92.49} & 89.88 & 83.27 & 88.45 \\
+$\mathcal{R}_{BERT}$, tuned threshold & 81.79 & 76.94 & 61.35 & 66.15 & 71.56 \\
+\hline
+\end{tabular}
+\caption{Step-verification accuracy (\%) on the same 1,282 held-out test steps as Table~\ref{tab:test_split_results}.}
+\label{tab:test_split_accuracy}
+\end{table*}

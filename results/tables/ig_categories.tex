@@ -1,0 +1,17 @@
+\begin{table}[ht]
+\centering
+\small
+\begin{tabular}{lrrr}
+\hline
+\textbf{Category} & \textbf{Tokens} & \textbf{Mean attr.} & \textbf{Share $|$attr.$|$} \\
+\hline
+math notation & 28.4\% & +3.68 & 43.4\% \\
+number & 8.6\% & +0.97 & 6.3\% \\
+other word & 62.3\% & +0.19 & 49.6\% \\
+hedging / contrast & 0.4\% & -0.09 & 0.4\% \\
+negation & 0.3\% & -3.10 & 0.3\% \\
+\hline
+\end{tabular}
+\caption{Mean Integrated Gradients attribution to the routing margin (in $10^{-2}$ logits; positive values push towards Lean) and share of the total absolute attribution, by lexical category of the input words over the whole test split.}
+\label{tab:ig_categories}
+\end{table}

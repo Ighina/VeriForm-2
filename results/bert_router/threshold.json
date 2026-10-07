@@ -1,0 +1,8 @@
+{
+  "threshold": 0.03408214822411537,
+  "comparison": "p_lean >= threshold",
+  "model": "/home/helenf/projects/gsm8k-verification/outputs/bert_step_router/model",
+  "selected_on": "validation",
+  "objective": "balanced_accuracy",
+  "device": "cpu"
+}

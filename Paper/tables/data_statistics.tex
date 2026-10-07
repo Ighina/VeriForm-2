@@ -1,0 +1,18 @@
+\begin{table*}[ht]
+\centering
+\small
+\begin{tabular}{lrrrrrrrr}
+\hline
+\textbf{Dataset} & \textbf{Solutions} & \textbf{Steps} & \textbf{Annotated} & \textbf{Correct (\%)} & \textbf{Routable} & \textbf{Train} & \textbf{Val.} & \textbf{Test} \\
+\hline
+GSM8K & 400 & 2,082 & 1,568 & 86.8 & 1,465 & 1,089 & 60 & 316 \\
+MATH & 1,000 & 6,505 & 4,366 & 86.4 & 1,847 & 1,354 & 86 & 407 \\
+OlympiadBench & 1,000 & 8,819 & 5,822 & 88.6 & 1,789 & 1,367 & 74 & 348 \\
+OmniMATH & 1,000 & 8,291 & 4,792 & 84.2 & 1,343 & 994 & 57 & 292 \\
+\hline
+Total & 3,400 & 25,697 & 16,548 & 86.6 & 6,444 & 4,804 & 277 & 1,363 \\
+\hline
+\end{tabular}
+\caption{ProcessBench statistics. \emph{Annotated} counts the steps up to and including the first annotated error (steps after it carry no independent label); \emph{Correct} is the share of annotated steps that are correct. \emph{Routable} steps are the annotated steps with a Boolean Python verdict used to train and evaluate the BERT router, split by problem into training, validation and test.}
+\label{tab:data_stats}
+\end{table*}

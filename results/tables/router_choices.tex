@@ -1,0 +1,21 @@
+\begin{table*}[ht]
+\centering
+\small
+\begin{tabular}{llrrrrrr}
+\hline
+\textbf{Router} & \textbf{Dataset} & \textit{python} & \textit{lean} & \textit{tie} & \textit{neither} & \textit{inconclusive} & \textit{unresolved} \\
+\hline
+Qwen3.5-9B & GSM8K & 62.8 & 9.2 & 4.7 & 10.7 & 12.4 & 0.3 \\
+ & MATH & 47.7 & 15.4 & 1.0 & 14.1 & 21.6 & 0.2 \\
+ & OlympiadBench & 47.4 & 12.5 & 0.4 & 11.9 & 27.4 & 0.3 \\
+ & OmniMATH & 43.1 & 9.7 & 0.4 & 16.3 & 30.2 & 0.3 \\
+\hline
+GPT-5.6 Luna & GSM8K & 22.6 & 8.5 & 30.9 & 10.7 & 26.9 & 0.4 \\
+ & MATH & 18.5 & 15.7 & 2.6 & 40.0 & 17.8 & 5.4 \\
+ & OlympiadBench & 15.9 & 12.3 & 1.4 & 46.1 & 19.2 & 5.0 \\
+ & OmniMATH & 13.3 & 9.4 & 1.4 & 44.5 & 23.6 & 7.7 \\
+\hline
+\end{tabular}
+\caption{Distribution (\%) of the LLM router choices over the annotated steps. \emph{unresolved} are steps for which the model produced no valid answer within the token budget.}
+\label{tab:router_choices}
+\end{table*}

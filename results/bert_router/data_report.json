@@ -1,0 +1,129 @@
+{
+  "config": {
+    "annotations": "Qwen/ProcessBench",
+    "python_results": "outputs/processbench_verification/step_results.jsonl",
+    "non_boolean": "exclude",
+    "output_dir": "outputs/bert_step_router",
+    "model": "google-bert/bert-base-uncased",
+    "seed": 42,
+    "epochs": 3,
+    "batch_size": 16,
+    "learning_rate": 2e-05,
+    "max_length": 512,
+    "prepare_only": false
+  },
+  "filter_counts": {
+    "after_first_error": 9149,
+    "non_boolean": 10104,
+    "included_steps": 6444,
+    "included_problems": 1778
+  },
+  "splits": {
+    "train": {
+      "gsm8k": {
+        "problems": 276,
+        "steps": 1089,
+        "labels": {
+          "Python": 979,
+          "Lean": 110
+        }
+      },
+      "math": {
+        "problems": 470,
+        "steps": 1354,
+        "labels": {
+          "Python": 1256,
+          "Lean": 98
+        }
+      },
+      "olympiadbench": {
+        "problems": 261,
+        "steps": 1367,
+        "labels": {
+          "Python": 1253,
+          "Lean": 114
+        }
+      },
+      "omnimath": {
+        "problems": 327,
+        "steps": 994,
+        "labels": {
+          "Python": 884,
+          "Lean": 110
+        }
+      }
+    },
+    "validation": {
+      "gsm8k": {
+        "problems": 18,
+        "steps": 60,
+        "labels": {
+          "Python": 55,
+          "Lean": 5
+        }
+      },
+      "math": {
+        "problems": 31,
+        "steps": 86,
+        "labels": {
+          "Lean": 11,
+          "Python": 75
+        }
+      },
+      "olympiadbench": {
+        "problems": 17,
+        "steps": 74,
+        "labels": {
+          "Python": 69,
+          "Lean": 5
+        }
+      },
+      "omnimath": {
+        "problems": 22,
+        "steps": 57,
+        "labels": {
+          "Python": 50,
+          "Lean": 7
+        }
+      }
+    },
+    "test": {
+      "gsm8k": {
+        "problems": 74,
+        "steps": 316,
+        "labels": {
+          "Python": 277,
+          "Lean": 39
+        }
+      },
+      "math": {
+        "problems": 125,
+        "steps": 407,
+        "labels": {
+          "Python": 373,
+          "Lean": 34
+        }
+      },
+      "olympiadbench": {
+        "problems": 70,
+        "steps": 348,
+        "labels": {
+          "Lean": 32,
+          "Python": 316
+        }
+      },
+      "omnimath": {
+        "problems": 87,
+        "steps": 292,
+        "labels": {
+          "Python": 241,
+          "Lean": 51
+        }
+      }
+    }
+  },
+  "id2label": {
+    "0": "Python",
+    "1": "Lean"
+  }
+}

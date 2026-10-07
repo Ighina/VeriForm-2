@@ -1,0 +1,159 @@
+{
+  "metrics": {
+    "test_loss": 0.343291699886322,
+    "test_accuracy": 0.8840792369772561,
+    "test_macro_f1": 0.49887840202539185,
+    "test_balanced_accuracy": 0.5131258895757653,
+    "test_runtime": 1.5465,
+    "test_samples_per_second": 881.326,
+    "test_steps_per_second": 55.608
+  },
+  "classification_report": {
+    "Python": {
+      "precision": 0.8882309400444115,
+      "recall": 0.9942004971002486,
+      "f1-score": 0.9382329945269742,
+      "support": 1207.0
+    },
+    "Lean": {
+      "precision": 0.4166666666666667,
+      "recall": 0.03205128205128205,
+      "f1-score": 0.05952380952380952,
+      "support": 156.0
+    },
+    "accuracy": 0.8840792369772561,
+    "macro avg": {
+      "precision": 0.6524488033555391,
+      "recall": 0.5131258895757653,
+      "f1-score": 0.49887840202539185,
+      "support": 1363.0
+    },
+    "weighted avg": {
+      "precision": 0.8342588001713901,
+      "recall": 0.8840792369772561,
+      "f1-score": 0.8376617305060691,
+      "support": 1363.0
+    }
+  },
+  "confusion_matrix_Python_Lean": [
+    [
+      1200,
+      7
+    ],
+    [
+      151,
+      5
+    ]
+  ],
+  "per_source": {
+    "gsm8k": {
+      "Python": {
+        "precision": 0.8793650793650793,
+        "recall": 1.0,
+        "f1-score": 0.9358108108108109,
+        "support": 277.0
+      },
+      "Lean": {
+        "precision": 1.0,
+        "recall": 0.02564102564102564,
+        "f1-score": 0.05,
+        "support": 39.0
+      },
+      "accuracy": 0.879746835443038,
+      "macro avg": {
+        "precision": 0.9396825396825397,
+        "recall": 0.5128205128205128,
+        "f1-score": 0.49290540540540545,
+        "support": 316.0
+      },
+      "weighted avg": {
+        "precision": 0.8942535664054653,
+        "recall": 0.879746835443038,
+        "f1-score": 0.8264860588436537,
+        "support": 316.0
+      }
+    },
+    "math": {
+      "Python": {
+        "precision": 0.9185185185185185,
+        "recall": 0.9973190348525469,
+        "f1-score": 0.9562982005141388,
+        "support": 373.0
+      },
+      "Lean": {
+        "precision": 0.5,
+        "recall": 0.029411764705882353,
+        "f1-score": 0.05555555555555555,
+        "support": 34.0
+      },
+      "accuracy": 0.9164619164619164,
+      "macro avg": {
+        "precision": 0.7092592592592593,
+        "recall": 0.5133653997792146,
+        "f1-score": 0.5059268780348471,
+        "support": 407.0
+      },
+      "weighted avg": {
+        "precision": 0.8835562835562835,
+        "recall": 0.9164619164619164,
+        "f1-score": 0.8810518861932745,
+        "support": 407.0
+      }
+    },
+    "olympiadbench": {
+      "Python": {
+        "precision": 0.9120234604105572,
+        "recall": 0.9841772151898734,
+        "f1-score": 0.9467275494672754,
+        "support": 316.0
+      },
+      "Lean": {
+        "precision": 0.2857142857142857,
+        "recall": 0.0625,
+        "f1-score": 0.10256410256410256,
+        "support": 32.0
+      },
+      "accuracy": 0.8994252873563219,
+      "macro avg": {
+        "precision": 0.5988688730624214,
+        "recall": 0.5233386075949367,
+        "f1-score": 0.524645826015689,
+        "support": 348.0
+      },
+      "weighted avg": {
+        "precision": 0.8544318121626242,
+        "recall": 0.8994252873563219,
+        "f1-score": 0.8691033244646847,
+        "support": 348.0
+      }
+    },
+    "omnimath": {
+      "Python": {
+        "precision": 0.8275862068965517,
+        "recall": 0.995850622406639,
+        "f1-score": 0.903954802259887,
+        "support": 241.0
+      },
+      "Lean": {
+        "precision": 0.5,
+        "recall": 0.0196078431372549,
+        "f1-score": 0.03773584905660377,
+        "support": 51.0
+      },
+      "accuracy": 0.8253424657534246,
+      "macro avg": {
+        "precision": 0.6637931034482758,
+        "recall": 0.5077292327719469,
+        "f1-score": 0.4708453256582454,
+        "support": 292.0
+      },
+      "weighted avg": {
+        "precision": 0.7703708077468114,
+        "recall": 0.8253424657534246,
+        "f1-score": 0.752663135775752,
+        "support": 292.0
+      }
+    }
+  },
+  "training_majority_baseline_test_accuracy": 0.8855465884079237
+}
