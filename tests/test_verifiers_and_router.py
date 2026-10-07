@@ -72,3 +72,8 @@ class CriticTests(unittest.TestCase):
         self.assertEqual(parse_judgement('Sure. {"verdict":"correct","reason":"ok"}')["verdict"], True)
         with self.assertRaises(ValueError):
             parse_judgement('{"verdict": "maybe", "reason": "r"}')
+        truncated = parse_judgement('{"verdict":"incorrect", "reason":"The step miscounts the')
+        self.assertEqual(truncated["verdict"], False)
+        self.assertEqual(truncated["reason"], "The step miscounts the")
+        with self.assertRaises(ValueError):
+            parse_judgement("I think the step is fine.")

@@ -71,7 +71,7 @@ def main() -> int:
         name, _, path = item.partition("=")
         if not path:
             raise SystemExit(f"--method expects NAME=PATH, got {item!r}")
-        methods[name] = load_step_verdicts(Path(path))
+        methods[f"Direct LLM critic ({name})"] = load_step_verdicts(Path(path))
     report = build_comparison(
         truth=load_step_labels(args.dataset),
         python=load_python_predictions(args.python_results),
@@ -102,7 +102,7 @@ def main() -> int:
         if label + suffix in report["matched_test"]:
             names[label + suffix] = rf"$\mathcal{{R}}_{{BERT}}$ ({label}), tuned threshold"
     for name in methods:
-        names[name] = rf"Direct LLM critic, {name} (no verifier)"
+        names[name] = name.replace("Direct LLM critic (", "Direct LLM critic, ").rstrip(")") + " (no verifier)"
     # Rows identical to an earlier row on every matched step are omitted from the tables.
     for name, same_as in report["identical_predictions"].items():
         names.pop(name, None)

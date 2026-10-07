@@ -118,6 +118,8 @@ def build_comparison(
     methods = [PYTHON_ONLY, LEAN_ONLY, CONJUNCTION, DISJUNCTION,
                *([PYTHON_FALLBACK, LEAN_FALLBACK] if fallbacks else []),
                ORACLE, *llm_choices, *(m for m, _, _ in bert_methods), *(extra_methods or {})]
+    if len(set(methods)) != len(methods):
+        raise ValueError(f"Duplicate method names: {[m for m in methods if methods.count(m) > 1]}")
     matched: dict[str, list[tuple[str, bool, bool]]] = {m: [] for m in methods}
     bert_full: dict[str, list[tuple[str, bool, bool]]] = {m: [] for m, _, _ in bert_methods}
     routing: dict[str, list[tuple[str, bool, bool]]] = {m: [] for m, _, _ in bert_methods}

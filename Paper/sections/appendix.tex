@@ -175,6 +175,30 @@ ORIGINAL JOINT COMPARISON:
 \end{verbatim}
 \end{small}
 
+\paragraph{Direct critic.} The verifier-free baseline uses the system prompt below; the user message contains the problem, the numbered preceding steps and the target step (``judge only this''), and a single greedy answer of at most 256 tokens is parsed.
+
+\begin{small}
+\begin{verbatim}
+You are a meticulous step-local mathematical proof
+reviewer. You are given a problem, the earlier
+steps of a candidate solution and one target step.
+Judge exactly the target step: is it a correct
+step given the problem and the earlier steps? Use
+only the problem and the earlier context; assume
+the earlier steps are given, and do not judge the
+whole solution or any later step. A step is
+incorrect when it contains a computational error,
+an invalid inference, a false claim or a
+misreading of the problem. A step that makes no
+new mathematical claim (restating the problem,
+announcing a plan) is correct.
+
+Return only one JSON object with exactly this
+shape: {"verdict":"correct|incorrect",
+"reason":"brief step-local justification"}
+\end{verbatim}
+\end{small}
+
 \section{BERT router details}
 \label{app:bert_details}
 The learned router fine-tunes \texttt{bert-base-uncased} (110M parameters) \cite{devlin-etal-2019-bert} with a two-way classification head on the step text alone; the problem statement, the preceding steps and any verifier output are not given to the model. Training uses the Hugging Face \texttt{Trainer} with cross-entropy loss, AdamW (learning rate $2\cdot10^{-5}$, weight decay 0.01, linear decay without warm-up), batch size 16, 3 epochs, inputs truncated to 512 tokens and seed 42; the checkpoint with the best validation macro-F1 (epoch 2) is kept. Training takes under two minutes on a single H200 GPU.
@@ -183,7 +207,7 @@ Because 90\% of the training labels are Python, the router is strongly biased to
 
 \section{Evaluation protocol}
 \label{app:evaluation}
-Each annotated step is predicted correct when the verifier selected by the router returns \texttt{True} and incorrect otherwise. For the LLM router, \textit{python} and \textit{lean} follow the corresponding verifier, \textit{neither} predicts an incorrect step, \textit{inconclusive} predicts a correct step and \textit{tie} is resolved only when the two verifiers agree. Of the 1,363 steps in the test split of the learned router, 81 are excluded because at least one LLM router produced no resolved verdict (request failure or discordant tie); the remaining 1,282 steps (313 GSM8K, 386 MATH, 326 OlympiadBench, 257 OmniMATH) are used for every method in Table~\ref{tab:test_split_results} and in Table~\ref{tab:test_split_accuracy}, which reports plain accuracy on the same steps. The \emph{Oracle routing} row selects, for each step, a verifier whose verdict matches the annotation whenever one exists and measures the headroom available to any router. The router-free rows combine the two verdicts without choosing: \emph{Both verifiers accept} is their conjunction and \emph{Either verifier accepts} their disjunction. Two further fallback policies coincide with rows of the table and are omitted: following Python and resorting to Lean only when Python produces no verdict equals \emph{Python only}, because the test split contains only steps with a Python verdict (Appendix~\ref{app:data_stats}), and following Lean with Python as fallback equals \emph{Either verifier accepts}, because Lean never returns \texttt{False}. \emph{Random routing} sends each step to Lean with a fixed probability and is averaged over 1,000 draws: at the Lean rates of the BERT router (0.9\%), Qwen3.5-9B (6.8\%) and GPT-5.6 Luna (12.3\%) on the matched steps it reaches an average balanced accuracy of 67.97, 67.61 and 67.33 (standard deviation 0.30, 0.83 and 1.09), always below \emph{Python only}; the table reports the last. On the full 1,363-step test split the BERT router obtains a balanced accuracy of 59.80, 76.00, 76.04 and 65.43 on the four datasets (average 69.32), the values reported in Table~\ref{tab:benchmark_results}, whose LLM rows are instead computed on all resolved ProcessBench steps (16,495 for Qwen3.5-9B and 15,636 for GPT-5.6 Luna). Exact McNemar tests against \emph{Python only} on the matched steps give $p=0.14$ for Qwen3.5-9B, $p=1$ for the BERT router, $p=0.0034$ for \emph{Either verifier accepts} (which trades balanced accuracy for accuracy: it accepts 39 steps that Python rejects, 29 of them correct) and $p<10^{-9}$ for GPT-5.6 Luna, for the conjunction and for both single-verifier baselines.
+Each annotated step is predicted correct when the verifier selected by the router returns \texttt{True} and incorrect otherwise. For the LLM router, \textit{python} and \textit{lean} follow the corresponding verifier, \textit{neither} predicts an incorrect step, \textit{inconclusive} predicts a correct step and \textit{tie} is resolved only when the two verifiers agree. Of the 1,363 steps in the test split of the learned router, 81 are excluded because at least one LLM router produced no resolved verdict (request failure or discordant tie); the remaining 1,282 steps (313 GSM8K, 386 MATH, 326 OlympiadBench, 257 OmniMATH) are used for every method in Table~\ref{tab:test_split_results} and in Table~\ref{tab:test_split_accuracy}, which reports plain accuracy on the same steps. The \emph{Oracle routing} row selects, for each step, a verifier whose verdict matches the annotation whenever one exists and measures the headroom available to any router. The router-free rows combine the two verdicts without choosing: \emph{Both verifiers accept} is their conjunction and \emph{Either verifier accepts} their disjunction. Two further fallback policies coincide with rows of the table and are omitted: following Python and resorting to Lean only when Python produces no verdict equals \emph{Python only}, because the test split contains only steps with a Python verdict (Appendix~\ref{app:data_stats}), and following Lean with Python as fallback equals \emph{Either verifier accepts}, because Lean never returns \texttt{False}. \emph{Random routing} sends each step to Lean with a fixed probability and is averaged over 1,000 draws: at the Lean rates of the BERT router (0.9\%), Qwen3.5-9B (6.8\%) and GPT-5.6 Luna (12.3\%) on the matched steps it reaches an average balanced accuracy of 67.97, 67.61 and 67.33 (standard deviation 0.30, 0.83 and 1.09), always below \emph{Python only}; the table reports the last. The \emph{direct critic} row is Qwen3.5-9B asked, in one greedy call per step with the prompt of Appendix~\ref{app:prompts}, whether the target step is correct given the problem and the preceding steps; it answers for all 1,363 test steps and is scored on the same 1,282 matched steps. Its advantage over the routers lies in the recall of incorrect steps (76.3\% pooled, against 39.8\% for \emph{Python only} and 72.0\% for the GPT-5.6 Luna router), at the same plain accuracy as \emph{Python only} (exact McNemar $p=0.59$); against the GPT-5.6 Luna router it is correct on 200 steps where the router is wrong and wrong on 93 ($p<10^{-9}$), and against the Qwen3.5-9B router on 118 versus 96 ($p=0.15$). On the full 1,363-step test split the BERT router obtains a balanced accuracy of 59.80, 76.00, 76.04 and 65.43 on the four datasets (average 69.32), the values reported in Table~\ref{tab:benchmark_results}, whose LLM rows are instead computed on all resolved ProcessBench steps (16,495 for Qwen3.5-9B and 15,636 for GPT-5.6 Luna). Exact McNemar tests against \emph{Python only} on the matched steps give $p=0.14$ for Qwen3.5-9B, $p=1$ for the BERT router, $p=0.0034$ for \emph{Either verifier accepts} (which trades balanced accuracy for accuracy: it accepts 39 steps that Python rejects, 29 of them correct) and $p<10^{-9}$ for GPT-5.6 Luna, for the conjunction and for both single-verifier baselines.
 
 \input{tables/router_test_split_accuracy}
 

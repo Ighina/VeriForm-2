@@ -1042,6 +1042,99 @@
         "incorrect_step_recall": 0.636090491339696
       }
     },
+    "Direct LLM critic (Qwen3.5-9B)": {
+      "gsm8k": {
+        "n": 313,
+        "accuracy": 0.9105431309904153,
+        "balanced_accuracy": 0.8242467718794835,
+        "correct_step_recall": 0.9411764705882353,
+        "incorrect_step_recall": 0.7073170731707317,
+        "confusion_matrix_false_true": [
+          [
+            29,
+            12
+          ],
+          [
+            16,
+            256
+          ]
+        ]
+      },
+      "math": {
+        "n": 386,
+        "accuracy": 0.9145077720207254,
+        "balanced_accuracy": 0.8656349206349206,
+        "correct_step_recall": 0.9257142857142857,
+        "incorrect_step_recall": 0.8055555555555556,
+        "confusion_matrix_false_true": [
+          [
+            29,
+            7
+          ],
+          [
+            26,
+            324
+          ]
+        ]
+      },
+      "olympiadbench": {
+        "n": 326,
+        "accuracy": 0.8926380368098159,
+        "balanced_accuracy": 0.8385642135642135,
+        "correct_step_recall": 0.8993506493506493,
+        "incorrect_step_recall": 0.7777777777777778,
+        "confusion_matrix_false_true": [
+          [
+            14,
+            4
+          ],
+          [
+            31,
+            277
+          ]
+        ]
+      },
+      "omnimath": {
+        "n": 257,
+        "accuracy": 0.8560311284046692,
+        "balanced_accuracy": 0.8229282794500186,
+        "correct_step_recall": 0.8632478632478633,
+        "incorrect_step_recall": 0.782608695652174,
+        "confusion_matrix_false_true": [
+          [
+            18,
+            5
+          ],
+          [
+            32,
+            202
+          ]
+        ]
+      },
+      "pooled": {
+        "n": 1282,
+        "accuracy": 0.8962558502340093,
+        "balanced_accuracy": 0.8362528394198847,
+        "correct_step_recall": 0.9097938144329897,
+        "incorrect_step_recall": 0.7627118644067796,
+        "confusion_matrix_false_true": [
+          [
+            90,
+            28
+          ],
+          [
+            105,
+            1059
+          ]
+        ]
+      },
+      "macro_average": {
+        "accuracy": 0.8934300170564065,
+        "balanced_accuracy": 0.8378435463821591,
+        "correct_step_recall": 0.9073723172252584,
+        "incorrect_step_recall": 0.7683147755390598
+      }
+    },
     "Random routing (BERT router rate)": {
       "gsm8k": {
         "n": 313.0,
@@ -1775,6 +1868,11 @@
       "only_method_correct": 44,
       "only_python_correct": 261,
       "mcnemar_exact_p": 1.0834197798117638e-38
+    },
+    "Direct LLM critic (Qwen3.5-9B)": {
+      "only_method_correct": 112,
+      "only_python_correct": 103,
+      "mcnemar_exact_p": 0.5854471457724054
     }
   },
   "policy": "Step verdicts: Python/Lean True -> correct step, anything else -> incorrect. LLM router choices: python/lean follow that verifier; neither -> incorrect; inconclusive -> correct; tie resolved only when verifiers agree. Steps with an unresolved LLM choice (request error or discordant tie) or an unresolved extra-method verdict are excluded for every method. Fallback baselines follow the first verifier when its outcome is True/False and the second one otherwise; 'Both'/'Either' are the conjunction/disjunction of the two verdicts; random routing sends each step to Lean with the probability at which the named router did on the matched steps, averaged over seeds."

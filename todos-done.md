@@ -508,3 +508,48 @@ output in `outputs/llm_critic/qwen3.5-9b/` and the compact `results/llm_critic/q
 GPT-5.6 Luna was not run: no `OPENAI_API_KEY` in this environment; the same script runs it with
 `--backend openai --model <id> --reasoning-effort low` (≈1.4k calls) if you want the row.
 The critic row and its sentence in the paper are added once the job ends (see §10 if present).
+
+---
+
+## 10. Update of 2026-10-08 (05:00): the direct LLM critic (baseline 4) — read this one
+
+Qwen3.5-9B judged all 1,363 test steps from the problem and the earlier steps alone (gpuq jobs
+311652767 and 1442742827; the second regenerated 243 answers that the token limit had truncated,
+after I made the parser recover a verdict from a cut JSON object; 0 failures in the end). Scored on
+the same 1,282 matched steps:
+
+| Method | GSM8K | MATH | Olympiad | Omni | Avg bal. acc. | Acc. avg | Incorrect-step recall (pooled) |
+|---|---|---|---|---|---|---|---|
+| Python only | 58.8 | 75.8 | 74.0 | 63.4 | 68.0 | 88.5 | 39.8 |
+| R_LLM GPT-5.6 Luna (reads both verifiers) | 75.5 | 80.1 | 84.9 | 75.2 | 78.9 | 80.8 | 69.5 |
+| **Direct critic, Qwen3.5-9B (no verifier)** | **82.4** | **86.6** | 83.9 | **82.3** | **83.8** | 89.3 | 76.3 |
+| Oracle routing | 70.7 | 87.9 | 91.7 | 89.6 | 85.0 | 93.6 | — |
+
+The critic beats every router and every verifier combination, comes within 1.2 points of the
+oracle, and does so without losing plain accuracy (McNemar vs Python only p = 0.59). Paired against
+the GPT-5.6 Luna router it is right on 200 steps where the router is wrong and wrong on 93
+(p < 1e-9); against the Qwen router 118 vs 96 (p = 0.15). Its edge is entirely in catching
+incorrect steps (76% recall vs 40% for Python only).
+
+**What this means for the paper.** The verifiers, and routing between them, currently add nothing
+over the judgement of a 9B LLM reading the step: the same model that, given both verifier bundles,
+reaches 70.6 as a "router" reaches 83.8 when simply asked whether the step is right. This has to be
+stated in the results and in the limitations; the honest framing is (i) deterministic verification
+is attractive for its auditability and its guarantees, not for its accuracy at this scale, (ii) the
+oracle shows the verifier pair *could* reach 85 if routed perfectly, and (iii) the a posteriori LLM
+"router" is a poorly used judge: it is told to compare artefact bundles rather than the step, and it
+answers `neither` on many correct steps. Options that would strengthen the paper, in order of cost:
+1. Add the critic's verdict as a *third* candidate to the oracle and to a simple ensemble (e.g.
+   accept a step only if the critic and Python agree; reject if either rejects): saved outputs only.
+2. Run the critic with GPT-5.6 Luna (OpenAI key needed, ~1.4k short calls) so the LLM rows are
+   paired model-for-model.
+3. Reframe the contribution around the interpretability and the oracle headroom, and present the
+   LLM-router results as negative.
+Possible caveat to mention: ProcessBench (2024) may be in Qwen3.5's training data; the critic's
+numbers could be optimistic for that reason, which the verifiers are immune to.
+
+Paper changes: the critic row is in `tab:test_split_results` and the accuracy twin (bold marks it
+best in four columns); one clause in the Evaluation subsection; a description with the recall and
+McNemar numbers in the evaluation appendix; the critic system prompt in the prompts appendix.
+Code: `evaluate_routers.py --method NAME=verdicts.csv` names the row "Direct LLM critic (NAME)"
+(a collision with the router of the same name is now an error). 37 tests pass. Committed and pushed.

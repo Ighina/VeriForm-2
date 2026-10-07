@@ -120,7 +120,13 @@ def parse_judgement(text: str) -> dict[str, Any]:
                 value = candidate
                 break
     if not isinstance(value, dict) or "verdict" not in value:
-        raise ValueError("model response did not contain a verdict JSON object")
+        # Long reasons can be cut by the token limit, leaving an unterminated JSON
+        # object; the verdict field comes first and is still recoverable.
+        match = re.search(r'"verdict"\s*:\s*"(correct|incorrect)"', cleaned, re.IGNORECASE)
+        if not match:
+            raise ValueError("model response did not contain a verdict JSON object")
+        value = {"verdict": match.group(1), "reason": re.search(r'"reason"\s*:\s*"(.*)', cleaned, re.DOTALL)}
+        value["reason"] = value["reason"].group(1).rstrip('"} \n') if value["reason"] else ""
     verdict = str(value["verdict"]).strip().lower()
     if verdict not in VERDICTS:
         raise ValueError(f"invalid verdict: {value['verdict']!r}")
@@ -220,6 +226,7 @@ def main(argv: list[str] | None = None) -> int:
         for number, step in enumerate(pending, 1):
             print(f"[{number}/{len(pending)}] judging {step.key}", flush=True)
             common = {k: getattr(step, k) for k in fields}
+            raw = None
             try:
                 raw = critic._call(build_prompt(step))
                 row = Judgement(**common, **parse_judgement(raw), model=args.model, backend=args.backend,
@@ -228,7 +235,7 @@ def main(argv: list[str] | None = None) -> int:
                 message = f"{type(error).__name__}: {error}"
                 print(f"  warning: {message}", flush=True)
                 row = Judgement(**common, verdict=None, reason=None, model=args.model, backend=args.backend,
-                                raw_response=None, error=message)
+                                raw_response=raw, error=message)
             by_key[step.key] = row
             rows = [by_key[k] for k in sorted(by_key)]
             write_outputs(args.output_dir, rows)
