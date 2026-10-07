@@ -20,10 +20,11 @@ from pathlib import Path
 
 import _paths  # noqa: F401
 from veriform2.data import DEFAULT_DATASET, load_step_labels
-from veriform2.evaluation.compare import (BERT_DEFAULT, BERT_TUNED, LEAN_ONLY, ORACLE, PYTHON_ONLY,
-                                          build_comparison, latex_table, print_summary, write_report)
-from veriform2.evaluation.loaders import (load_bert_probabilities, load_lean_predictions,
-                                          load_python_predictions, load_router_choices)
+from veriform2.evaluation.compare import (BERT_DEFAULT, BERT_TUNED, CONJUNCTION, DISJUNCTION, LEAN_FALLBACK,
+                                          LEAN_ONLY, ORACLE, PYTHON_FALLBACK, PYTHON_ONLY, build_comparison,
+                                          latex_table, print_summary, write_report)
+from veriform2.evaluation.loaders import (load_bert_probabilities, load_lean_predictions, load_python_predictions,
+                                          load_router_choices, load_step_verdicts, load_verifier_outcomes)
 
 
 def parse_args() -> argparse.Namespace:
@@ -38,6 +39,11 @@ def parse_args() -> argparse.Namespace:
                         help="LLM router classifications (jsonl or csv); repeatable")
     parser.add_argument("--extra-bert", action="append", default=[], metavar="LABEL=PROBABILITIES[=THRESHOLD_FILE]",
                         help="Additional BERT router(s) on the same test split; repeatable")
+    parser.add_argument("--method", action="append", default=[], metavar="NAME=PATH",
+                        help="Per-step verdicts of another method (csv/jsonl with a verdict column), "
+                             "e.g. a direct LLM critic; repeatable")
+    parser.add_argument("--random-seeds", type=int, default=1000,
+                        help="Draws for the random-routing baselines (0 disables them)")
     parser.add_argument("--output-dir", type=Path, default=Path("results/router_comparison"))
     return parser.parse_args()
 
@@ -60,15 +66,32 @@ def main() -> int:
             raise SystemExit(f"--extra-bert expects LABEL=PROBABILITIES[=THRESHOLD_FILE], got {item!r}")
         threshold = float(json.loads(Path(parts[2]).read_text())["threshold"]) if len(parts) == 3 else None
         extra[parts[0]] = (load_bert_probabilities(Path(parts[1])), threshold)
+    methods = {}
+    for item in args.method:
+        name, _, path = item.partition("=")
+        if not path:
+            raise SystemExit(f"--method expects NAME=PATH, got {item!r}")
+        methods[name] = load_step_verdicts(Path(path))
     report = build_comparison(
         truth=load_step_labels(args.dataset),
         python=load_python_predictions(args.python_results),
         lean=load_lean_predictions(args.lean_results),
         bert_rows=load_bert_probabilities(args.bert_probabilities),
         llm_choices=llm, tuned_threshold=tuned, extra_bert=extra,
+        python_outcomes=load_verifier_outcomes(args.python_results),
+        lean_outcomes=load_verifier_outcomes(args.lean_results),
+        extra_methods=methods, random_seeds=args.random_seeds,
     )
     write_report(report, args.output_dir / "metrics.json")
-    names = {PYTHON_ONLY: "Python only", LEAN_ONLY: "Lean only", ORACLE: "Oracle routing (upper bound)"}
+    names = {PYTHON_ONLY: "Python only", LEAN_ONLY: "Lean only",
+             PYTHON_FALLBACK: "Python, Lean when Python fails", LEAN_FALLBACK: "Lean, Python when Lean fails",
+             CONJUNCTION: "Both verifiers accept", DISJUNCTION: "Either verifier accepts"}
+    # The table keeps one random-routing row, at the largest Lean rate; metrics.json has them all.
+    if report["random_routing"]:
+        router = max(report["random_routing"], key=lambda r: report["random_routing"][r]["lean_rate"])
+        info = report["random_routing"][router]
+        names[router] = rf"Random routing ({100 * info['lean_rate']:.1f}\% Lean, the rate of {info['router']})"
+    names[ORACLE] = "Oracle routing (upper bound)"
     for name in llm:
         names[name] = rf"$\mathcal{{R}}_{{LLM}}$, {name}"
     names[BERT_DEFAULT] = r"$\mathcal{R}_{BERT}$"
@@ -78,6 +101,12 @@ def main() -> int:
         names[label] = rf"$\mathcal{{R}}_{{BERT}}$ ({label})"
         if label + suffix in report["matched_test"]:
             names[label + suffix] = rf"$\mathcal{{R}}_{{BERT}}$ ({label}), tuned threshold"
+    for name in methods:
+        names[name] = rf"Direct LLM critic, {name} (no verifier)"
+    # Rows identical to an earlier row on every matched step are omitted from the tables.
+    for name, same_as in report["identical_predictions"].items():
+        names.pop(name, None)
+        print(f"Table omits {name!r}: identical predictions to {same_as!r} on every matched step")
     bold = [n for n in names if n not in (ORACLE,)]
     n = report["matched_steps"]
     tables = {

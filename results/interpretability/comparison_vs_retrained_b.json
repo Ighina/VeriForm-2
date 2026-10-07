@@ -1,0 +1,104 @@
+{
+  "common_words": 568,
+  "spearman_mean_attribution": 0.4937529230581039,
+  "top_overlap": {
+    "towards_lean": {
+      "overlap": 4,
+      "k": 15,
+      "run_a": [
+        "not",
+        "does",
+        "however",
+        "work",
+        "solution",
+        "area",
+        "ate",
+        "period",
+        "used",
+        "test",
+        "only",
+        "were",
+        "had",
+        "but",
+        "children"
+      ],
+      "run_b": [
+        "solution",
+        "conditions",
+        "perimeter",
+        "choices",
+        "however",
+        "triangles",
+        "vertices",
+        "constraints",
+        "homework",
+        "spanish",
+        "bills",
+        "period",
+        "work",
+        "function",
+        "median"
+      ]
+    },
+    "towards_python": {
+      "overlap": 7,
+      "k": 15,
+      "run_a": [
+        "therefore",
+        "thus",
+        "let's",
+        "subtracting",
+        "finally",
+        "subtract",
+        "answer",
+        "inequality",
+        "equations",
+        "calculate",
+        "multiply",
+        "identify",
+        "solving",
+        "solve",
+        "now"
+      ],
+      "run_b": [
+        "let's",
+        "f(n",
+        "subtracting",
+        "simplifying",
+        "we'll",
+        "identify",
+        "inches",
+        "therefore",
+        "thus",
+        "simplify",
+        "substituting",
+        "percentage",
+        "solving",
+        "solve",
+        "$20"
+      ]
+    }
+  },
+  "categories": {
+    "number": {
+      "run_a": -0.004493832652615911,
+      "run_b": -0.01034044752779596
+    },
+    "math notation": {
+      "run_a": -0.03881874303241691,
+      "run_b": -0.01704440754829342
+    },
+    "negation": {
+      "run_a": 0.2586849959528384,
+      "run_b": 0.0056715692490898716
+    },
+    "hedging / contrast": {
+      "run_a": 0.02534976125201508,
+      "run_b": -0.002281530919967466
+    },
+    "other word": {
+      "run_a": -0.005848895107357745,
+      "run_b": -0.007207452711074097
+    }
+  }
+}

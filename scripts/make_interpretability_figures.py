@@ -45,12 +45,12 @@ def excerpt(result: dict, max_words: int = 42) -> list[dict]:
 
 def category_table(categories: list[dict]) -> str:
     lines = [r"\begin{table}[ht]", r"\centering", r"\small", r"\begin{tabular}{lrrr}", r"\hline",
-             r"\textbf{Category} & \textbf{Tokens} & \textbf{Mean attr.} & \textbf{Share $|$attr.$|$} \\", r"\hline"]
+             r"\textbf{Category} & \textbf{Share of words} & \textbf{Mean attr.} & \textbf{Share of $|$attr.$|$} \\", r"\hline"]
     for c in sorted(categories, key=lambda c: -c["mean_attribution"]):
         lines.append(f"{c['category']} & {100 * c['share_of_tokens']:.1f}\\% & "
                      f"{100 * c['mean_attribution']:+.2f} & {100 * c['share_of_absolute_attribution']:.1f}\\% \\\\")
     lines += [r"\hline", r"\end{tabular}",
-              r"\caption{Mean Integrated Gradients attribution to the routing margin (in $10^{-2}$ logits; positive values push towards Lean) and share of the total absolute attribution, by lexical category of the input words over the whole test split.}",
+              r"\caption{Integrated Gradients attribution of the routing margin $\mathrm{logit}(\mathrm{Lean})-\mathrm{logit}(\mathrm{Python})$ over all 1,363 test steps, by lexical category of the input words: share of the words, mean attribution per word (in $10^{-2}$ logits; positive values push towards Lean) and share of the total absolute attribution.}",
               r"\label{tab:ig_categories}", r"\end{table}"]
     return "\n".join(lines) + "\n"
 

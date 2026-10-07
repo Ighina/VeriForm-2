@@ -7,30 +7,30 @@
   "categories": [
     {
       "category": "number",
-      "count": 4425,
-      "share_of_tokens": 0.08584898339282943,
-      "mean_attribution": -0.010231608524767281,
-      "sem": 0.00035056280227386985,
-      "total_attribution": -45.27486772209522,
-      "share_of_absolute_attribution": 0.07378733483707049
+      "count": 4488,
+      "share_of_tokens": 0.0870712401055409,
+      "mean_attribution": -0.01034044752779596,
+      "sem": 0.0003484354695139835,
+      "total_attribution": -46.40792850474827,
+      "share_of_absolute_attribution": 0.07533853561293927
     },
     {
       "category": "math notation",
-      "count": 14636,
-      "share_of_tokens": 0.2839515753530964,
-      "mean_attribution": -0.016765835113558242,
-      "sem": 0.0003524424071265239,
-      "total_attribution": -245.38476272203843,
-      "share_of_absolute_attribution": 0.36917418926667595
+      "count": 13989,
+      "share_of_tokens": 0.2713991929225516,
+      "mean_attribution": -0.01704440754829342,
+      "sem": 0.00036593316973514514,
+      "total_attribution": -238.43421719307662,
+      "share_of_absolute_attribution": 0.35466751501901594
     },
     {
       "category": "negation",
-      "count": 133,
-      "share_of_tokens": 0.002580319726835325,
-      "mean_attribution": 0.00658497496011765,
-      "sem": 0.0026209057435001458,
-      "total_attribution": 0.8758016696956474,
-      "share_of_absolute_attribution": 0.002980858032473864
+      "count": 144,
+      "share_of_tokens": 0.0027937296290547883,
+      "mean_attribution": 0.0056715692490898716,
+      "sem": 0.0024403171295414136,
+      "total_attribution": 0.8167059718689416,
+      "share_of_absolute_attribution": 0.003081240785063898
     },
     {
       "category": "hedging / contrast",
@@ -43,12 +43,12 @@
     },
     {
       "category": "other word",
-      "count": 32131,
-      "share_of_tokens": 0.6233703243830514,
-      "mean_attribution": -0.007156768989900258,
-      "sem": 0.00013929327012522462,
-      "total_attribution": -229.9541444144852,
-      "share_of_absolute_attribution": 0.550042002494743
+      "count": 32704,
+      "share_of_tokens": 0.6344870401986652,
+      "mean_attribution": -0.007207452711074097,
+      "sem": 0.00013802416534640854,
+      "total_attribution": -235.71253346296726,
+      "share_of_absolute_attribution": 0.5628970932139442
     }
   ],
   "config": {

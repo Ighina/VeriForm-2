@@ -44,8 +44,14 @@ def word_units(text: str, offsets: Sequence[tuple[int, int]], attributions: Sequ
 
 
 def normalize_word(unit: str) -> str:
-    """Lower-case and strip surrounding punctuation; keep LaTeX and math tokens intact."""
+    """Lower-case and strip surrounding punctuation; keep LaTeX and math tokens intact.
+
+    Brackets are stripped as well when the unit contains no LaTeX, so that
+    ``(not`` and ``not`` are the same word while ``\\(x\\)`` is left alone.
+    """
     key = unit.lower().strip(".,;:!?\"'“”‘’`")
+    if "\\" not in key:
+        key = key.strip("()[]{}.,;:!?\"'“”‘’`")
     return key or unit.lower()
 
 

@@ -57,3 +57,18 @@ class ClassificationParsingTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CriticTests(unittest.TestCase):
+    def test_critic_prompt_and_parser(self):
+        from veriform2.baselines.llm_critic import CriticStep, build_prompt, parse_judgement
+        step = CriticStep(key="gsm8k-1:1", example_id="gsm8k-1", split="gsm8k", step_index=1, problem="P",
+                          target_step="So x = 2.", context=["Let x be the number."])
+        prompt = build_prompt(step)
+        self.assertIn("1. Let x be the number.", prompt)
+        self.assertIn("So x = 2.", prompt)
+        self.assertEqual(parse_judgement('```json\n{"verdict": "incorrect", "reason": "r"}\n```'),
+                         {"verdict": False, "reason": "r"})
+        self.assertEqual(parse_judgement('Sure. {"verdict":"correct","reason":"ok"}')["verdict"], True)
+        with self.assertRaises(ValueError):
+            parse_judgement('{"verdict": "maybe", "reason": "r"}')

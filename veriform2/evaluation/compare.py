@@ -9,22 +9,48 @@ four sub-datasets (the ``Average`` column of the paper tables).
 from __future__ import annotations
 
 import json
+import random
 from collections import Counter
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from .. import DATASETS, DATASET_NAMES
 from ..data import dataset_of
-from .loaders import routed_step_prediction
+from .loaders import has_verdict, routed_step_prediction
 from .metrics import ConfusionMatrix, exact_mcnemar_p, paired_counts
 
 StepKey = tuple[str, int]
 
 PYTHON_ONLY = "Python only"
 LEAN_ONLY = "Lean only"
+PYTHON_FALLBACK = "Python, Lean fallback"
+LEAN_FALLBACK = "Lean, Python fallback"
+CONJUNCTION = "Both verifiers"
+DISJUNCTION = "Either verifier"
+RANDOM_ROUTING = "Random routing"
 ORACLE = "Oracle routing"
 BERT_DEFAULT = "BERT router"
 BERT_TUNED = "BERT router (tuned threshold)"
+
+
+def random_routing_name(router: str) -> str:
+    return f"{RANDOM_ROUTING} ({router} rate)"
+
+
+def fallback_prediction(first: bool, first_outcome: str | None, second: bool) -> bool:
+    """Follow the first verifier when it produced a verdict, otherwise the second."""
+    return first if has_verdict(first_outcome) else second
+
+
+def average_metrics(reports: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    """Element-wise mean of several ``metrics_by_dataset`` reports (counts included)."""
+    averaged: dict[str, Any] = {}
+    for group, values in reports[0].items():
+        averaged[group] = {
+            metric: (sum(r[group][metric] for r in reports) / len(reports)
+                     if isinstance(value, (int, float)) and not isinstance(value, bool) else value)
+            for metric, value in values.items()}
+    return averaged
 
 
 def metrics_by_dataset(items: Sequence[tuple[str, bool, bool]]) -> dict[str, Any]:
@@ -56,14 +82,24 @@ def build_comparison(
     tuned_threshold: float | None = None,
     default_threshold: float = 0.5,
     extra_bert: Mapping[str, tuple[Sequence[Mapping[str, Any]], float | None]] | None = None,
+    python_outcomes: Mapping[StepKey, str] | None = None,
+    lean_outcomes: Mapping[StepKey, str] | None = None,
+    extra_methods: Mapping[str, Mapping[StepKey, bool | None]] | None = None,
+    random_seeds: int = 1000,
 ) -> dict[str, Any]:
     """Score every method on the matched test subset.
 
     ``bert_rows`` are the test rows with ``p_lean`` of the main BERT router and define
     the test set; ``llm_choices`` maps a router name to its saved choices.
     ``extra_bert`` maps a label to ``(rows, tuned_threshold)`` of additional BERT
-    routers trained on the same split (e.g. ablations).  Returns a JSON-serialisable
-    report.
+    routers trained on the same split (e.g. ablations).  ``python_outcomes`` and
+    ``lean_outcomes`` are the raw verifier outcomes, which enable the router-free
+    fallback baselines (a verifier is followed only when it produced a verdict);
+    the conjunction and disjunction of the two verifiers are always included.
+    ``extra_methods`` maps a name to per-step verdicts of other methods (e.g. a
+    direct LLM critic); ``None`` verdicts exclude the step for every method.
+    Random routing, at the rate at which each router sends steps to Lean, is
+    averaged over ``random_seeds`` draws.  Returns a JSON-serialisable report.
     """
     bert_variants: dict[str, tuple[dict[StepKey, Mapping[str, Any]], float | None]] = {
         BERT_DEFAULT: ({(str(r["example_id"]), int(r["step_index"])): r for r in bert_rows}, tuned_threshold)}
@@ -78,7 +114,10 @@ def build_comparison(
         if threshold is not None:
             suffix = BERT_TUNED[len(BERT_DEFAULT):]
             bert_methods.append((label + suffix, label, threshold))
-    methods = [PYTHON_ONLY, LEAN_ONLY, ORACLE, *llm_choices, *(m for m, _, _ in bert_methods)]
+    fallbacks = python_outcomes is not None and lean_outcomes is not None
+    methods = [PYTHON_ONLY, LEAN_ONLY, CONJUNCTION, DISJUNCTION,
+               *([PYTHON_FALLBACK, LEAN_FALLBACK] if fallbacks else []),
+               ORACLE, *llm_choices, *(m for m, _, _ in bert_methods), *(extra_methods or {})]
     matched: dict[str, list[tuple[str, bool, bool]]] = {m: [] for m in methods}
     bert_full: dict[str, list[tuple[str, bool, bool]]] = {m: [] for m, _, _ in bert_methods}
     routing: dict[str, list[tuple[str, bool, bool]]] = {m: [] for m, _, _ in bert_methods}
@@ -100,8 +139,15 @@ def build_comparison(
         predictions: dict[str, bool | None] = {
             PYTHON_ONLY: python[key],
             LEAN_ONLY: lean[key],
+            CONJUNCTION: python[key] and lean[key],
+            DISJUNCTION: python[key] or lean[key],
             ORACLE: expected if (python[key] == expected or lean[key] == expected) else (not expected),
         }
+        if fallbacks:
+            predictions[PYTHON_FALLBACK] = fallback_prediction(python[key], python_outcomes.get(key), lean[key])
+            predictions[LEAN_FALLBACK] = fallback_prediction(lean[key], lean_outcomes.get(key), python[key])
+        for name, verdicts in (extra_methods or {}).items():
+            predictions[name] = verdicts.get(key)
         for name, variant, threshold in bert_methods:
             p_lean = float(bert_variants[variant][0][key]["p_lean"])
             route_lean = p_lean >= threshold
@@ -117,6 +163,39 @@ def build_comparison(
         matched_keys.append(key)
         for name in methods:
             matched[name].append((dataset, expected, predictions[name]))
+
+    # Methods whose predictions coincide with an earlier method on every matched step.
+    identical: dict[str, str] = {}
+    for i, name in enumerate(methods):
+        for earlier in methods[:i]:
+            if earlier not in identical and matched[name] == matched[earlier]:
+                identical[name] = earlier
+                break
+
+    # Random routing at each router's Lean rate on the matched steps, averaged over seeds.
+    lean_rates: dict[str, float] = {}
+    for name, variant, threshold in bert_methods:
+        if name == BERT_DEFAULT:
+            lean_rates[name] = sum(float(bert_variants[variant][0][k]["p_lean"]) >= threshold
+                                   for k in matched_keys) / max(len(matched_keys), 1)
+    for name, choices in llm_choices.items():
+        lean_rates[name] = sum(choices.get(k) == "lean" for k in matched_keys) / max(len(matched_keys), 1)
+    random_routing: dict[str, dict[str, Any]] = {}
+    random_metrics: dict[str, dict[str, Any]] = {}
+    if random_seeds > 0 and matched_keys:
+        items = [(dataset_of(k[0]), truth[k], python[k], lean[k]) for k in matched_keys]
+        for router, rate in lean_rates.items():
+            draws = []
+            for seed in range(random_seeds):
+                rng = random.Random(seed)
+                draws.append(metrics_by_dataset([(d, e, l if rng.random() < rate else p) for d, e, p, l in items]))
+            name = random_routing_name(router)
+            random_metrics[name] = average_metrics(draws)
+            scores = [d["macro_average"]["balanced_accuracy"] for d in draws]
+            mean = sum(scores) / len(scores)
+            random_routing[name] = {"router": router, "lean_rate": rate, "seeds": random_seeds,
+                                    "macro_balanced_accuracy_mean": mean,
+                                    "macro_balanced_accuracy_sd": (sum((x - mean) ** 2 for x in scores) / len(scores)) ** 0.5}
 
     # Paired significance of each method against Python only on the matched subset.
     expected_list = [e for _, e, _ in matched[PYTHON_ONLY]]
@@ -141,7 +220,9 @@ def build_comparison(
         "thresholds": {"default": default_threshold, "tuned": tuned_threshold,
                        **{f"tuned:{label}": t for label, (_, t) in bert_variants.items() if label != BERT_DEFAULT}},
         "lean_routes_on_bert_test": dict(routes),
-        "matched_test": {m: metrics_by_dataset(v) for m, v in matched.items()},
+        "matched_test": {**{m: metrics_by_dataset(v) for m, v in matched.items()}, **random_metrics},
+        "random_routing": random_routing,
+        "identical_predictions": identical,
         "bert_full_test": {m: metrics_by_dataset(v) for m, v in bert_full.items() if v},
         "routing_label_metrics": {m: metrics_by_dataset(v) for m, v in routing.items() if v},
         "significance_vs_python_only": significance,
@@ -149,7 +230,11 @@ def build_comparison(
             "Step verdicts: Python/Lean True -> correct step, anything else -> incorrect. "
             "LLM router choices: python/lean follow that verifier; neither -> incorrect; "
             "inconclusive -> correct; tie resolved only when verifiers agree. Steps with an "
-            "unresolved LLM choice (request error or discordant tie) are excluded for every method."
+            "unresolved LLM choice (request error or discordant tie) or an unresolved extra-method "
+            "verdict are excluded for every method. Fallback baselines follow the first verifier "
+            "when its outcome is True/False and the second one otherwise; 'Both'/'Either' are the "
+            "conjunction/disjunction of the two verdicts; random routing sends each step to Lean "
+            "with the probability at which the named router did on the matched steps, averaged over seeds."
         ),
     }
     return report

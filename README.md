@@ -56,15 +56,17 @@ python scripts/evaluate_routers.py \
     --bert-probabilities results/bert_router/test_probabilities.jsonl \
     --threshold-file results/bert_router/threshold.json \
     --llm "Qwen3.5-9B=results/llm_router/qwen3.5-9b_choices.csv" \
-    --llm "GPT-5.6 Luna=results/llm_router/gpt-5.6-luna_choices.csv"
+    --llm "GPT-5.6 Luna=results/llm_router/gpt-5.6-luna_choices.csv" \
+    --method "Qwen3.5-9B=results/llm_critic/qwen3.5-9b_verdicts.csv"   # verifier-free LLM critic (optional)
 
 # Dataset, verifier-outcome and router-choice statistics (appendix tables)
 python scripts/data_statistics.py \
     --llm "Qwen3.5-9B=results/llm_router/qwen3.5-9b_choices.csv" \
     --llm "GPT-5.6 Luna=results/llm_router/gpt-5.6-luna_choices.csv"
 
-# Figures of the Integrated Gradients analysis from the saved attributions
+# Figures and category table of the dataset-wide Integrated Gradients analysis from the saved attributions
 python scripts/make_interpretability_figures.py
+python scripts/compare_interpretability_runs.py results/interpretability results/interpretability_retrained_a
 ```
 
 ProcessBench is downloaded from the Hugging Face Hub on first use.
@@ -92,6 +94,10 @@ python scripts/predict_bert_router.py "Therefore 12 / 3 = 4." --model outputs/be
 # 5. Interpretability of the BERT router
 python scripts/interpret_corpus.py --model outputs/bert_router/model \
     --rows outputs/bert_router/threshold_tuning/test_probabilities.jsonl --device cuda
+python scripts/aggregate_attributions.py results/interpretability   # re-aggregate after changing the word categories
+# Verifier-free LLM critic (ProcessBench protocol) over the BERT test split, one GPU
+python scripts/run_llm_critic.py --rows results/bert_router/test_probabilities.jsonl --device cuda \
+    --output-dir outputs/llm_critic/qwen3.5-9b --export results/llm_critic/qwen3.5-9b_verdicts.csv
 python scripts/interpret_bert_router.py --model outputs/bert_router/model --step "However, this doesn't follow."
 python scripts/analyze_lean_triggers.py --model outputs/bert_router/model \
     --predictions outputs/bert_router/threshold_tuning/test_probabilities.jsonl

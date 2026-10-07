@@ -1,0 +1,104 @@
+{
+  "common_words": 568,
+  "spearman_mean_attribution": -0.3459440493773027,
+  "top_overlap": {
+    "towards_lean": {
+      "overlap": 1,
+      "k": 15,
+      "run_a": [
+        "not",
+        "does",
+        "however",
+        "work",
+        "solution",
+        "area",
+        "ate",
+        "period",
+        "used",
+        "test",
+        "only",
+        "were",
+        "had",
+        "but",
+        "children"
+      ],
+      "run_b": [
+        "\\(b\\)",
+        "\\(x\\)",
+        "\\(n\\)",
+        "solution",
+        "12\\)",
+        "6\\)",
+        "perimeter",
+        "3\\)",
+        "\\(3\\)",
+        "5\\)",
+        "\\(y\\)",
+        "50%",
+        "choices",
+        "\\(a\\)",
+        "-\\frac{48}{7}"
+      ]
+    },
+    "towards_python": {
+      "overlap": 1,
+      "k": 15,
+      "run_a": [
+        "therefore",
+        "thus",
+        "let's",
+        "subtracting",
+        "finally",
+        "subtract",
+        "answer",
+        "inequality",
+        "equations",
+        "calculate",
+        "multiply",
+        "identify",
+        "solving",
+        "solve",
+        "now"
+      ],
+      "run_b": [
+        "her",
+        "travels",
+        "she",
+        "drives",
+        "had",
+        "killed",
+        "was",
+        "turns",
+        "spent",
+        "without",
+        "his",
+        "would",
+        "sold",
+        "subtracting",
+        "than"
+      ]
+    }
+  },
+  "categories": {
+    "number": {
+      "run_a": -0.004493832652615911,
+      "run_b": 0.010070713940889854
+    },
+    "math notation": {
+      "run_a": -0.03881874303241691,
+      "run_b": 0.037492757931471034
+    },
+    "negation": {
+      "run_a": 0.2586849959528384,
+      "run_b": -0.03045970212668989
+    },
+    "hedging / contrast": {
+      "run_a": 0.02534976125201508,
+      "run_b": -0.0008919679573854032
+    },
+    "other word": {
+      "run_a": -0.005848895107357745,
+      "run_b": 0.002215098279415811
+    }
+  }
+}

@@ -85,6 +85,52 @@ def load_lean_predictions(path: Path) -> dict[StepKey, bool]:
     return result
 
 
+def load_verifier_outcomes(path: Path) -> dict[StepKey, str]:
+    """Raw verifier outcome per step (``True``, ``False`` or a failure category).
+
+    Works for both the Python results (``outcome``) and the Lean results
+    (``semantic_outcome``); used by the router-free fallback baselines, which need
+    to know whether a verifier produced a verdict at all.
+    """
+    result: dict[StepKey, str] = {}
+    for row in read_rows(path):
+        if row.get("representation", "linear") != "linear":
+            continue
+        key = (str(row["example_id"]), _step_index(row))
+        outcome = row.get("outcome") if "outcome" in row else (
+            row.get("semantic_outcome") or row.get("sandbox_outcome") or row.get("result") or "")
+        result[key] = str(outcome or "").strip()
+    return result
+
+
+def has_verdict(outcome: str | None) -> bool:
+    """Whether a raw verifier outcome is an actual verdict rather than a failure."""
+    return str(outcome or "").strip().lower() in ("true", "false")
+
+
+def load_step_verdicts(path: Path) -> dict[StepKey, bool | None]:
+    """Per-step correctness verdicts of a direct critic (``verdict`` column).
+
+    ``True``/``correct`` and ``False``/``incorrect`` map to booleans; empty values
+    (failed requests, unparseable answers) are stored as ``None``.
+    """
+    result: dict[StepKey, bool | None] = {}
+    for row in read_rows(path):
+        key = (str(row["example_id"]), _step_index(row))
+        if key in result:
+            raise ValueError(f"Duplicate verdict row: {key}")
+        value = str(row.get("verdict") or "").strip().lower()
+        if value in ("true", "correct"):
+            result[key] = True
+        elif value in ("false", "incorrect"):
+            result[key] = False
+        elif value == "":
+            result[key] = None
+        else:
+            raise ValueError(f"Unexpected verdict {value!r} for {key}")
+    return result
+
+
 def load_router_choices(path: Path) -> dict[StepKey, str | None]:
     """LLM router choices (``python``/``lean``/``tie``/``neither``/``inconclusive``).
 

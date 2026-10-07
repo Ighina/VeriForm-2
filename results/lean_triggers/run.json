@@ -1,0 +1,22 @@
+{
+  "model": "outputs/bert_step_router/model",
+  "predictions": "outputs/bert_step_router/threshold_tuning/test_probabilities.jsonl",
+  "min_probability": 0.5,
+  "workers": 4,
+  "threads": 4,
+  "n_steps": 100,
+  "max_steps": 1600,
+  "output_dir": "outputs/bert_step_router/lean_triggers",
+  "selection": "All saved test predictions meeting cutoff; descending P(Lean)",
+  "routing_threshold": 0.5,
+  "versions": {
+    "torch": "2.11.0+cu129",
+    "transformers": "5.13.1",
+    "captum": "0.9.0",
+    "numpy": "2.4.4"
+  },
+  "completed_examples": 12,
+  "failed_convergence": [
+    "olympiadbench-165"
+  ]
+}

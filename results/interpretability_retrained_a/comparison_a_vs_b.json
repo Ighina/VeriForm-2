@@ -1,9 +1,9 @@
 {
-  "common_words": 558,
-  "spearman_mean_attribution": 0.12370987374657502,
+  "common_words": 568,
+  "spearman_mean_attribution": 0.14148701360018473,
   "top_overlap": {
     "towards_lean": {
-      "overlap": 2,
+      "overlap": 3,
       "k": 15,
       "run_a": [
         "\\(b\\)",
@@ -11,14 +11,14 @@
         "\\(n\\)",
         "solution",
         "12\\)",
-        "perimeter",
         "6\\)",
-        "slices",
+        "perimeter",
         "3\\)",
         "\\(3\\)",
         "5\\)",
         "\\(y\\)",
         "50%",
+        "choices",
         "\\(a\\)",
         "-\\frac{48}{7}"
       ],
@@ -26,18 +26,18 @@
         "solution",
         "conditions",
         "perimeter",
-        "period",
+        "choices",
         "however",
         "triangles",
+        "vertices",
         "constraints",
+        "homework",
         "spanish",
-        "work",
         "bills",
+        "period",
+        "work",
         "function",
-        "not",
-        "different",
-        "sequence",
-        "series"
+        "median"
       ]
     },
     "towards_python": {
@@ -56,17 +56,18 @@
         "without",
         "his",
         "would",
+        "sold",
         "subtracting",
-        "than",
-        "he"
+        "than"
       ],
       "run_b": [
         "let's",
-        "f(n)",
+        "f(n",
         "subtracting",
         "simplifying",
         "we'll",
         "identify",
+        "inches",
         "therefore",
         "thus",
         "simplify",
@@ -74,31 +75,30 @@
         "percentage",
         "solving",
         "solve",
-        "$20",
-        "inside"
+        "$20"
       ]
     }
   },
   "categories": {
     "number": {
-      "run_a": 0.009729549536105945,
-      "run_b": -0.010231608524767281
+      "run_a": 0.010070713940889854,
+      "run_b": -0.01034044752779596
     },
     "math notation": {
-      "run_a": 0.036809788803296765,
-      "run_b": -0.016765835113558242
+      "run_a": 0.037492757931471034,
+      "run_b": -0.01704440754829342
     },
     "negation": {
-      "run_a": -0.030952895626721596,
-      "run_b": 0.00658497496011765
+      "run_a": -0.03045970212668989,
+      "run_b": 0.0056715692490898716
     },
     "hedging / contrast": {
       "run_a": -0.0008919679573854032,
       "run_b": -0.002281530919967466
     },
     "other word": {
-      "run_a": 0.0018690778808585775,
-      "run_b": -0.007156768989900258
+      "run_a": 0.002215098279415811,
+      "run_b": -0.007207452711074097
     }
   }
 }

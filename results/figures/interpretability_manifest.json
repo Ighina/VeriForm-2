@@ -1,65 +1,65 @@
 {
   "cases": [
     {
-      "example_id": "math-161",
-      "step_index": 3,
+      "example_id": "math-391",
+      "step_index": 2,
       "label": 1,
-      "p_lean": 0.25187331438064575,
-      "margin": -1.0886461734771729
+      "p_lean": 0.5397439002990723,
+      "margin": 0.15931178629398346
     },
     {
-      "example_id": "gsm8k-133",
-      "step_index": 1,
+      "example_id": "math-970",
+      "step_index": 3,
       "label": 0,
-      "p_lean": 0.03520486503839493,
-      "margin": -3.3107314109802246
+      "p_lean": 0.012550869956612587,
+      "margin": -4.365334987640381
     }
   ],
   "categories": {
     "number": {
       "category": "number",
-      "count": 4425,
-      "share_of_tokens": 0.08584898339282943,
-      "mean_attribution": 0.009729549536105945,
-      "sem": 0.0005252649994948041,
-      "total_attribution": 43.05325669726881,
-      "share_of_absolute_attribution": 0.06287162661855109
+      "count": 4488,
+      "share_of_tokens": 0.0870712401055409,
+      "mean_attribution": -0.004493832652615911,
+      "sem": 0.0006408701837230046,
+      "total_attribution": -20.168320944940206,
+      "share_of_absolute_attribution": 0.042200788492977315
     },
     "math notation": {
       "category": "math notation",
-      "count": 14636,
-      "share_of_tokens": 0.2839515753530964,
-      "mean_attribution": 0.036809788803296765,
-      "sem": 0.000470155181413049,
-      "total_attribution": 538.7480689250515,
-      "share_of_absolute_attribution": 0.43374754392346215
+      "count": 13989,
+      "share_of_tokens": 0.2713991929225516,
+      "mean_attribution": -0.03881874303241691,
+      "sem": 0.0007587296391574861,
+      "total_attribution": -543.0353962804802,
+      "share_of_absolute_attribution": 0.2506676549506732
     },
     "negation": {
       "category": "negation",
-      "count": 133,
-      "share_of_tokens": 0.002580319726835325,
-      "mean_attribution": -0.030952895626721596,
-      "sem": 0.0033520179587957642,
-      "total_attribution": -4.116735118353972,
-      "share_of_absolute_attribution": 0.0033478821963460297
+      "count": 144,
+      "share_of_tokens": 0.0027937296290547883,
+      "mean_attribution": 0.2586849959528384,
+      "sem": 0.020349838034103694,
+      "total_attribution": 37.25063941720873,
+      "share_of_absolute_attribution": 0.013734146528361323
     },
     "hedging / contrast": {
       "category": "hedging / contrast",
       "count": 219,
       "share_of_tokens": 0.00424879714418749,
-      "mean_attribution": -0.0008919679573854032,
-      "sem": 0.0023631767817561757,
-      "total_attribution": -0.1953409826674033,
-      "share_of_absolute_attribution": 0.0038780689962845264
+      "mean_attribution": 0.02534976125201508,
+      "sem": 0.009881207706372,
+      "total_attribution": 5.551597714191303,
+      "share_of_absolute_attribution": 0.008205924727122709
     },
     "other word": {
       "category": "other word",
-      "count": 32131,
-      "share_of_tokens": 0.6233703243830514,
-      "mean_attribution": 0.0018690778808585775,
-      "sem": 0.00019741712460304945,
-      "total_attribution": 60.05534138986695,
-      "share_of_absolute_attribution": 0.4961548782653562
+      "count": 32704,
+      "share_of_tokens": 0.6344870401986652,
+      "mean_attribution": -0.005848895107357745,
+      "sem": 0.0005206789908638333,
+      "total_attribution": -191.28226559102768,
+      "share_of_absolute_attribution": 0.6851914853008655
     }
   }
 }

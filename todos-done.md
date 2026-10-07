@@ -19,8 +19,9 @@ Everything requested in `TODOs.md` has been done, with the exceptions and caveat
    *isn't* raise P(Lean), confirmed by deletion/masking). The BERT weights are unreadable, so I
    recomputed Integrated Gradients on routers retrained with the same recipe, dataset-wide; that
    analysis turned out **not to be reproducible across retrainings** and is reported in the
-   appendix only as a negative result (§4). **Two figure files still have to be copied by you**
-   (§7, item 1): the sandbox would not let me copy files out of the collaborator's folder.
+   appendix only as a negative result (§4). *Superseded on 2026-10-08:* with the real weights
+   readable, the dataset-wide analysis was recomputed on the real router and now appears in the
+   appendix as a positive result (§8).
 5. The paper could not be compiled here: no LaTeX installation exists on this machine.
    Every `.tex` file was checked mechanically (balanced environments, resolvable
    `\ref`/`\input`/`\cite`, figure files) but you should compile once on Overleaf.
@@ -341,6 +342,8 @@ collaborator's HF cache is not readable).
 
 ## 7. Open points for you
 
+*Items 1 and 2 were done on 2026-10-08 (see §8); items 3–7 are still open.*
+
 1. **Copy the two figure files** (the sandbox refused to copy anything out of the collaborator's
    folder into the repository, so the paper's Figure `fig:lean_triggers` currently renders a framed
    "missing" note):
@@ -371,3 +374,137 @@ collaborator's HF cache is not readable).
 7. The background Claude session you moved aside last night ("Paper refactoring and TODOs
    implementation") is idle and contains nothing beyond the first session's transcript; it can be
    closed (`claude attach "Paper refactoring"` and exit, or `claude stop "Paper refactoring"`).
+
+---
+
+## 8. Update of 2026-10-08: dataset-wide Integrated Gradients on the real router
+
+You copied the two figures and the Lean-trigger records (`Paper/figures/lean_triggers_*.pdf`,
+`results/lean_triggers/`) and made `outputs/bert_step_router/model/model.safetensors` readable.
+Loading those weights reproduces the saved test probabilities of the paper's router to four
+decimals, so they are the real ones.
+
+### What was run
+`scripts/interpret_corpus.py` on the real router over all 1,363 test steps (routing margin
+logit(Lean) − logit(Python), 50 Gauss–Legendre steps doubled up to 400 at a 0.02 tolerance). Run
+through `gpuq submit -g 1` (job 989659557, finished 02:56; a CPU copy started as a fallback gives
+identical attributions on every step and can be deleted: `rm -rf results/interpretability_router_cpu`).
+1,017 of the 1,363 steps meet the tolerance; the residual is below 0.07 logits (5% of the margin) for
+95% of the steps and all statistics below are unchanged on the converged subset. The run
+reproduces the 12 Lean routes exactly.
+
+One fix to the word normalisation: units such as `(not` were kept distinct from `not` (and
+classified as math notation because of the bracket); brackets are now stripped when the unit
+contains no LaTeX (`veriform2/interpretability/words.py`, test added). The new
+`scripts/aggregate_attributions.py` re-derives the word/category aggregates of an existing run,
+and all three runs (real, retrained A, retrained B) were re-aggregated with it.
+
+### Result (now in the paper)
+The dataset-wide picture agrees with the collaborator's 12-step case study and is much sharper:
+
+| Category (share of words) | mean attribution (×10⁻² logits, + = Lean) |
+|---|---|
+| negation (0.3%) | **+25.9** |
+| hedging / contrast (0.4%) | +2.5 |
+| number (8.7%) | −0.4 |
+| other word (63.4%) | −0.6 |
+| math notation (27.1%) | −3.9 |
+
+Among the 568 words with ≥10 occurrences in ≥5 steps, the strongest words towards Lean are *not*
+(+0.33 logits per occurrence, n=89), *does* (+0.29), *however* (+0.27), then *work, solution, area*;
+*doesn't* is +0.42 over 8 occurrences. Towards Python: *therefore* (−0.32, n=170), *thus* (−0.28),
+*let's* (−0.25), *subtracting, finally, subtract, answer, inequality, equations, calculate* (−0.16,
+n=181). Steps containing a negation word (95) have mean P(Lean) 0.29 vs 0.08 for the rest; the
+margin grows with step length (Spearman 0.72 with the number of words) and falls with the share of
+math notation (−0.36). In words: the router sends long steps that negate or qualify a claim to
+Lean and short "compute this" steps to Python.
+
+The retrained routers remain a negative result, now stated as a reproducibility caveat: their
+step margins correlate 0.24 (A) and 0.82 (B) with the real router's, their word-level attributions
+correlate −0.35 (A) and 0.49 (B) with the real ones and 0.14 with each other, and neither shows the
+negation effect (−0.03 and +0.01).
+
+### Paper changes
+* `sections/interpretability.tex`: the last sentence (which said the dataset-wide analysis was not
+  reliable) now states the dataset-wide result in two sentences and points to the appendix.
+* `sections/appendix.tex`, "Integrated Gradients details": the negative-result paragraph is replaced
+  by a "Dataset-wide analysis" paragraph (method, convergence, findings) with the new
+  Table `tab:ig_categories` (`tables/ig_categories.tex`) and Figure `fig:ig_top_words`
+  (`figures/ig_top_words.pdf`, a `figure*`, 15 words per direction with standard errors), followed
+  by a short "Reproducibility" paragraph with the retrained-router numbers. Nothing else in the
+  paper was touched. Mechanical check: all `\ref`s resolve, environments balance, all `\input` and
+  figure files exist. Still uncompiled (no LaTeX here).
+
+### Repository changes (uncommitted; `git status` lists them)
+* `results/interpretability/` is now the real router's run (attributions, aggregates, summary,
+  `comparison_vs_retrained_{a,b}.json`); the retrained runs moved to
+  `results/interpretability_retrained_a/` and `_b/` (`git mv`), their figures to
+  `results/figures_retrained_a/`; `results/figures/` and `results/tables/ig_categories.tex` are
+  regenerated from the real run. `results/README.md` and `README.md` describe the new layout.
+* `scripts/make_interpretability_figures.py`: table header and caption wording only.
+* 31 tests pass. I did not commit or push: the working tree contains your copied figures and
+  records too, so please review `git status` and commit when you are happy (the CPU duplicate
+  directory is the only thing that should not go in).
+
+### Baselines suggested in §5, and what each needs
+All four were suggested to make the comparison in Table `tab:test_split_results` answer the
+reviewer question "does routing buy anything over simply combining the two verifiers?".
+
+| # | Baseline | What it needs | Effort |
+|---|---|---|---|
+| 1 | **Python with Lean fallback** (use Lean's verdict only when Python gives none, i.e. a synthesis or sandbox failure), and the reverse | Only the saved outcomes (`results/verifiers/*.csv`). One more policy in `veriform2/evaluation/compare.py` (`build_comparison` builds the per-step verdicts of Python only / Lean only / Oracle at lines ~101–103) and a name in `scripts/evaluate_routers.py`; the table is regenerated by the command in §6. | minutes, no GPU |
+| 2 | **Conjunction / disjunction** (accept a step only if both verifiers accept it / if either does) | Same as 1. | minutes, no GPU |
+| 3 | **Random routing** at each router's Lean rate (BERT: 12/1,282; Qwen and GPT: their `lean` share from `results/llm_router/*_choices.csv`), averaged over e.g. 1,000 seeds | Same as 1 plus a seed loop; report mean ± sd. | minutes, no GPU |
+| 4 | **The LLM as a direct step critic** (ProcessBench protocol: the model reads problem, previous steps and the target step and says whether the step is correct, with no verifier output) | New inference: one pass of Qwen3.5-9B over the 1,282 matched test steps (or the full 1,363) with a short prompt, i.e. a new script modelled on `scripts/run_llm_router.py` with a different prompt and a yes/no parser, submitted via `gpuq` (about 1–2 GPU-hours with vLLM/HF generation at the router's settings); optionally the same for GPT-5.6 Luna through the API (≈1.3k calls). Then it is scored by `evaluate_routers.py` like any other method. | hours; the only one that needs a model |
+
+A fifth, related item from §5 is the **a priori LLM router** (same LLM, step text only, same five
+choices): this is the same kind of run as 4 (one Qwen pass over the test steps with the router
+prompt minus the verifier artefacts) and would make the LLM and BERT rows directly comparable.
+If you want them, say which, and I will add 1–3 to the table in one go and prepare the script
+and `gpuq` submission for 4 (and/or the a priori router) for you to launch.
+
+---
+
+## 9. Update of 2026-10-08 (later): baselines 1–4
+
+### Baselines 1–3 (router-free, from the saved outputs)
+Implemented in `veriform2/evaluation/compare.py` (`build_comparison`) and `scripts/evaluate_routers.py`;
+`results/router_comparison/metrics.json` has every row, the LaTeX tables omit rows whose predictions
+coincide with an earlier row on every matched step (the script prints which). Balanced accuracy (%)
+on the 1,282 matched test steps, average over datasets (plain accuracy in brackets):
+
+| Method | Avg. bal. acc. | (acc.) | McNemar vs Python only |
+|---|---|---|---|
+| Python only | 68.0 | (88.5) | — |
+| Lean only | 63.0 | (59.7) | p < 1e-9, worse |
+| Both verifiers accept (conjunction) | 65.6 | (58.0) | p < 1e-9, worse |
+| Either verifier accepts (disjunction) | 65.4 | (90.1) | p = 0.003: 29 vs 10 discordant, higher accuracy, lower balanced accuracy |
+| Python, Lean when Python fails | = Python only | | identical by construction: the test split only has steps with a Python verdict |
+| Lean, Python when Lean fails | = Either | | identical because Lean never returns False |
+| Random routing, BERT rate (0.9% Lean) | 67.97 ± 0.30 | (88.2) | 1,000 draws |
+| Random routing, Qwen rate (6.8% Lean) | 67.61 ± 0.83 | (86.5) | |
+| Random routing, GPT rate (12.3% Lean) | 67.33 ± 1.09 | (84.9) | shown in the table |
+| Oracle routing | 85.0 | (93.6) | |
+
+Reading: no router-free combination beats Python only in balanced accuracy, and random routing at
+the routers' Lean rates is strictly below Python only. So the routers' gains (Qwen +2.6 n.s.,
+GPT +10.9) are not reproducible without choosing *which* steps go to Lean, which is the point the
+reviewer question was about. "Either verifier" is the best plain-accuracy policy (90.1) but is less
+balanced: Lean rescues 29 Python-rejected steps that are correct and 10 that are not.
+
+Paper: the table `tab:test_split_results` (and the accuracy twin) gained the rows Both / Either /
+Random routing (GPT's rate); one sentence in the Evaluation subsection of the setup introduces the
+baselines; the evaluation appendix explains the rows, the two omitted identities, the three random
+rates with means and standard deviations, and the McNemar results. Tests: 36 pass (5 new).
+
+### Baseline 4 (direct LLM critic, needs a model)
+`veriform2/baselines/llm_critic.py` + `scripts/run_llm_critic.py`: the ProcessBench protocol step by
+step (problem, earlier steps, target step → `{"verdict": correct|incorrect}`), one greedy call per
+step with the same backend, decoding and checkpointing as the LLM router (thinking off, 256 new
+tokens). `evaluate_routers.py --method NAME=verdicts.csv` scores it like any other method (steps
+without a parseable verdict are excluded for every method, as for the LLM routers). Submitted as
+gpuq job 311652767 on GPU 3 (Qwen3.5-9B from the shared HF cache, about 3 s per step, 1,363 steps);
+output in `outputs/llm_critic/qwen3.5-9b/` and the compact `results/llm_critic/qwen3.5-9b_verdicts.csv`.
+GPT-5.6 Luna was not run: no `OPENAI_API_KEY` in this environment; the same script runs it with
+`--backend openai --model <id> --reasoning-effort low` (≈1.4k calls) if you want the row.
+The critic row and its sentence in the paper are added once the job ends (see §10 if present).

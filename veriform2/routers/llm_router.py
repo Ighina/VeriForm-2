@@ -241,18 +241,19 @@ class LLMRouter:
 
 class OpenAIRouter(LLMRouter):
     def __init__(self, model: str, api_key: str | None, base_url: str | None, timeout: float,
-                 max_tokens: int, reasoning_effort: str | None):
+                 max_tokens: int, reasoning_effort: str | None, system_prompt: str = SYSTEM_PROMPT):
         try:
             from openai import OpenAI
         except ImportError as error:
             raise SystemExit("The OpenAI backend requires the openai package.") from error
         self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
         self.model, self.max_tokens, self.reasoning_effort = model, max_tokens, reasoning_effort
+        self.system_prompt = system_prompt
 
     def _call(self, user: str) -> str:
         request: dict[str, Any] = {
             "model": self.model, "max_completion_tokens": self.max_tokens,
-            "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}],
+            "messages": [{"role": "system", "content": self.system_prompt}, {"role": "user", "content": user}],
         }
         if self.reasoning_effort is not None:
             request["reasoning_effort"] = self.reasoning_effort
@@ -266,13 +267,14 @@ class OpenAIRouter(LLMRouter):
 class HuggingFaceRouter(LLMRouter):
     """Greedy decoding with a local chat model (thinking mode disabled)."""
 
-    def __init__(self, model: str, token: str | None, device: str | None, max_tokens: int):
+    def __init__(self, model: str, token: str | None, device: str | None, max_tokens: int,
+                 system_prompt: str = SYSTEM_PROMPT):
         try:
             import torch
             from transformers import AutoModelForCausalLM, AutoTokenizer
         except ImportError as error:
             raise SystemExit("Local inference requires transformers, accelerate and torch.") from error
-        self.torch, self.max_tokens = torch, max_tokens
+        self.torch, self.max_tokens, self.system_prompt = torch, max_tokens, system_prompt
         self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Loading {model} on {self.device}...", flush=True)
         self.tokenizer = AutoTokenizer.from_pretrained(model, token=token, trust_remote_code=True)
@@ -283,7 +285,7 @@ class HuggingFaceRouter(LLMRouter):
         self.model = AutoModelForCausalLM.from_pretrained(model, **kwargs).eval()
 
     def _call(self, user: str) -> str:
-        messages = [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}]
+        messages = [{"role": "system", "content": self.system_prompt}, {"role": "user", "content": user}]
         kwargs: dict[str, Any] = {"add_generation_prompt": True, "return_tensors": "pt",
                                   "return_dict": True, "enable_thinking": False}
         try:

@@ -66,3 +66,49 @@ class MetricTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class BaselinePolicyTests(unittest.TestCase):
+    def test_fallback_follows_first_verifier_only_when_it_has_a_verdict(self):
+        from veriform2.evaluation.compare import fallback_prediction
+        self.assertIs(fallback_prediction(False, "False", True), False)
+        self.assertIs(fallback_prediction(False, "Autoformalisation failure", True), True)
+        self.assertIs(fallback_prediction(True, "True", False), True)
+        self.assertIs(fallback_prediction(False, "Prover failure", False), False)
+
+    def test_verdict_loader_and_outcome_check(self):
+        from veriform2.evaluation.loaders import has_verdict
+        self.assertTrue(has_verdict("True") and has_verdict("false"))
+        self.assertFalse(has_verdict("Prover failure") or has_verdict("") or has_verdict(None))
+
+    def test_comparison_includes_router_free_baselines(self):
+        from veriform2.evaluation.compare import (CONJUNCTION, DISJUNCTION, LEAN_FALLBACK, PYTHON_FALLBACK,
+                                                  build_comparison, random_routing_name)
+        keys = [("gsm8k-1", 0), ("gsm8k-1", 1), ("math-2", 0), ("math-2", 1)]
+        truth = {keys[0]: True, keys[1]: False, keys[2]: True, keys[3]: False}
+        python = {keys[0]: True, keys[1]: False, keys[2]: False, keys[3]: False}
+        python_outcomes = {keys[0]: "True", keys[1]: "False", keys[2]: "Autoformalisation failure", keys[3]: "False"}
+        lean = {keys[0]: False, keys[1]: False, keys[2]: True, keys[3]: False}
+        lean_outcomes = {keys[0]: "Prover failure", keys[1]: "Prover failure", keys[2]: "True", keys[3]: "Prover failure"}
+        rows = [{"example_id": k[0], "step_index": k[1], "label": 0, "p_lean": 0.1} for k in keys]
+        critic = {k: True for k in keys}
+        report = build_comparison(truth, python, lean, rows, {}, python_outcomes=python_outcomes,
+                                  lean_outcomes=lean_outcomes, extra_methods={"critic": critic}, random_seeds=3)
+        pooled = {m: report["matched_test"][m]["pooled"]["accuracy"] for m in report["matched_test"]}
+        self.assertEqual(pooled[PYTHON_FALLBACK], 1.0)   # Lean rescues the step Python could not check
+        self.assertEqual(pooled[DISJUNCTION], 1.0)
+        self.assertEqual(pooled[CONJUNCTION], 0.5)      # Lean certifies neither Python-accepted step
+        self.assertEqual(pooled[LEAN_FALLBACK], 1.0)
+        self.assertEqual(pooled["critic"], 0.5)
+        self.assertIn(random_routing_name("BERT router"), report["matched_test"])
+        self.assertEqual(report["random_routing"][random_routing_name("BERT router")]["lean_rate"], 0.0)
+
+    def test_unresolved_extra_verdict_excludes_the_step(self):
+        from veriform2.evaluation.compare import build_comparison
+        keys = [("gsm8k-1", 0), ("gsm8k-1", 1)]
+        truth = {k: True for k in keys}
+        rows = [{"example_id": k[0], "step_index": k[1], "label": 0, "p_lean": 0.1} for k in keys]
+        report = build_comparison(truth, {k: True for k in keys}, {k: False for k in keys}, rows, {},
+                                  extra_methods={"critic": {keys[0]: True, keys[1]: None}}, random_seeds=0)
+        self.assertEqual(report["matched_steps"], 1)
+        self.assertEqual(report["excluded_test_steps"], {"unresolved_llm_router": 1})

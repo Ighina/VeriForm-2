@@ -62,6 +62,8 @@ class WordAggregationTests(unittest.TestCase):
 
     def test_normalise_and_categorise(self):
         self.assertEqual(normalize_word("However,"), "however")
+        self.assertEqual(normalize_word("(not"), "not")
+        self.assertEqual(normalize_word("\\(x\\)"), "\\(x\\)")
         self.assertEqual(categorize("however"), "hedging / contrast")
         self.assertEqual(categorize("doesn't"), "negation")
         self.assertEqual(categorize("12"), "number")

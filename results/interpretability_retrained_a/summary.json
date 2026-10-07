@@ -1,0 +1,72 @@
+{
+  "steps": 1363,
+  "converged": 1363,
+  "mean_margin": -1.5605575976263313,
+  "steps_routed_to_lean_at_0.5": 0,
+  "mean_abs_convergence_delta": 0.000235912500062762,
+  "categories": [
+    {
+      "category": "number",
+      "count": 4488,
+      "share_of_tokens": 0.0870712401055409,
+      "mean_attribution": 0.010070713940889854,
+      "sem": 0.0005214192181642363,
+      "total_attribution": 45.19736416671367,
+      "share_of_absolute_attribution": 0.0645703134959056
+    },
+    {
+      "category": "math notation",
+      "count": 13989,
+      "share_of_tokens": 0.2713991929225516,
+      "mean_attribution": 0.037492757931471034,
+      "sem": 0.0004851389887418614,
+      "total_attribution": 524.4861907033483,
+      "share_of_absolute_attribution": 0.4185621700752115
+    },
+    {
+      "category": "negation",
+      "count": 144,
+      "share_of_tokens": 0.0027937296290547883,
+      "mean_attribution": -0.03045970212668989,
+      "sem": 0.003150248417054454,
+      "total_attribution": -4.386197106243344,
+      "share_of_absolute_attribution": 0.0035613656850687534
+    },
+    {
+      "category": "hedging / contrast",
+      "count": 219,
+      "share_of_tokens": 0.00424879714418749,
+      "mean_attribution": -0.0008919679573854032,
+      "sem": 0.0023631767817561757,
+      "total_attribution": -0.1953409826674033,
+      "share_of_absolute_attribution": 0.0038780689962845264
+    },
+    {
+      "category": "other word",
+      "count": 32704,
+      "share_of_tokens": 0.6344870401986652,
+      "mean_attribution": 0.002215098279415811,
+      "sem": 0.00019703801223372555,
+      "total_attribution": 72.44257413001469,
+      "share_of_absolute_attribution": 0.5094280817475296
+    }
+  ],
+  "config": {
+    "model": "outputs/bert_router/model",
+    "rows": "outputs/bert_router/threshold_tuning/test_probabilities.jsonl",
+    "output_dir": "results/interpretability",
+    "device": "cuda",
+    "n_steps": 50,
+    "max_steps": 400,
+    "internal_batch_size": 50,
+    "delta_tolerance": 0.02,
+    "limit": null,
+    "threads": 8
+  },
+  "versions": {
+    "torch": "2.11.0+cu129",
+    "transformers": "5.13.1",
+    "captum": "0.9.0",
+    "numpy": "2.4.4"
+  }
+}
