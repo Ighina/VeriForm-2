@@ -1,8 +1,7 @@
 # VeriForm: verifying mathematical reasoning traces with Python *and* Lean
 
 Code, saved results and LaTeX sources for the paper *VeriForm: Verifying Mathematical
-Reasoning Traces by Combining Formal and General-Purpose Programming Languages*
-(Eleanor Fan, Iacopo Ghinassi).
+Reasoning Traces by Combining Formal and General-Purpose Programming Languages*.
 
 Every step of an LLM-generated solution is sent by a **router** to one of two
 deterministic **verifiers**:
